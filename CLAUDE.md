@@ -11,7 +11,7 @@ This is a portfolio project for SOC / detection engineering / IR roles, not a pr
 Origin nod: the built-in rule set is called the **Frontline Pack** (Kevin's company,
 Frontline Consultant, is where this started).
 
-Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.3.0.
+Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.4.0.
 
 ---
 
@@ -39,9 +39,9 @@ Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.3.0
 | v0.2 | BYOK web page, stateless FastAPI backend, Railway deploy | Done, released as v0.2.0 |
 | v0.2.0 extras | Frontline Pack grown to 8 rules; Splunk SPL + Microsoft KQL conversion | Done |
 | v0.3 | Browser extension "Highlight to Detect" | Built and released as v0.3.0; Chrome Web Store submission is Kevin's |
-| v0.4 | Real-data backtest (OTRF, pinned), RSigma cross-check in CI, ATT&CK kill-chain coverage visual | Built (ADR 0006) |
+| v0.4 | Real-data backtest (OTRF, pinned), RSigma cross-check in CI, ATT&CK kill-chain coverage visual | Done, released as v0.4.0 (ADR 0006) |
 
-Design decisions live in `docs/decisions/` (ADRs 0001–0004). Read the relevant ADR before
+Design decisions live in `docs/decisions/` (ADRs 0001–0006). Read the relevant ADR before
 changing that area; write a new ADR for any new architectural choice.
 
 ---
@@ -83,12 +83,16 @@ ringtail/
 │   ├── attack.py                # pinned ATT&CK index lookups
 │   ├── matcher.py · testrunner.py   # the test engine (ADR 0001)
 │   ├── card.py                  # detection card markdown
-│   └── convert.py               # Splunk SPL + our own KQL backend (ADR 0004)
+│   ├── convert.py               # Splunk SPL + our own KQL backend (ADR 0004)
+│   ├── backtest.py              # replay pinned OTRF recordings (ADR 0006)
+│   ├── crosscheck.py            # compare verdicts with RSigma (ADR 0006)
+│   └── coverage.py              # ATT&CK kill-chain SVG (ADR 0006)
 ├── backend/app.py               # FastAPI: /api/prompt, /api/check, /api/health; no key ever
 ├── web/                         # static BYOK page; ringtail-client.js + ringtail-ui.js are shared with the extension
 ├── extension/                   # v0.3 MV3 extension: manifest, background.js, sidepanel/, lib/ (synced copies), icons/
 ├── scripts/                     # sync_extension.py, make_icons.py, make_store_images.py, package_extension.py
 ├── data/attack/                 # pinned ATT&CK v20.1 index (+ version note, SHA-256)
+├── data/datasets/               # otrf.yml (pinned recordings + expectations), backtest.json
 ├── rules/frontline-pack/{windows,cloudtrail}/<rule>.yml
 ├── tests/rules/<rule-id>/{true_positive,false_positive}.json
 ├── cards/<rule-id>.yml (human notes) · cards/<rule-id>.md (generated)

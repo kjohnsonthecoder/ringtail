@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Ringtail: Highlight to Detect",
   "short_name": "Ringtail",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Highlight attacker behavior in a threat report and get a Sigma detection rule proven against sample logs. Bring your own key.",
   "homepage_url": "https://github.com/kjohnsonthecoder/ringtail",
   "minimum_chrome_version": "116",

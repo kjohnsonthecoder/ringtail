@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.4.0 (2026-11-18)
+
+Every rule is now proven twice beyond its own samples: against real recorded attacks, and
+by a second, independent Sigma engine. Plus the Frontline Pack drawn on the attack line.
+
+### Real-data backtest (`ringtail backtest`)
+- Replays 13 real attack recordings (59,093 events) from OTRF Security-Datasets against
+  every rule, pinned by repository commit and a SHA-256 per file.
+- The LSASS (comsvcs) and encoded-PowerShell rules fire on the real attacks. Nothing fires
+  on recordings of other techniques.
+- 5 coverage gaps are documented with reasons (same technique, a method the rule doesn't
+  cover, such as LSASS dumped from Task Manager), not hidden. Full results:
+  [docs/backtest.md](docs/backtest.md).
+- Downloads are treated as untrusted: verified by hash, read in memory, `.json` only, capped.
+
+### Second engine (`ringtail crosscheck`)
+- CI runs every rule through [RSigma](https://github.com/timescale/rsigma) v0.27.0 (pinned,
+  hash-checked) on the same samples and real recordings, and fails on any disagreement with
+  Ringtail's matcher. First run: full agreement.
+
+### The attack line (`ringtail coverage`)
+- An SVG of the Frontline Pack on the MITRE ATT&CK v20.1 tactic line, under Lockheed Martin
+  Cyber Kill Chain phases, with each rule colored by its evidence. Shown in the README and
+  on the live site; CI fails if it's stale.
+
+### Design
+- [ADR 0006](docs/decisions/0006-real-data-backtest-and-second-engine.md); threat model T5
+  covers the new downloads and the pinned binary.
+
 ## v0.3.0 (2026-11-18)
 
 The **Highlight to Detect** browser extension for Chrome and Edge.
