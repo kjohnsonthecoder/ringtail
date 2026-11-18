@@ -202,14 +202,19 @@ def _test_lines(report: RuleReport) -> list[str]:
 
 def render_card(rule_path: Path, notes: CardNotes, report: RuleReport) -> str:
     text = Path(rule_path).read_text(encoding="utf-8")
+    return render_card_text(text, Path(rule_path).stem, notes, report)
+
+
+def render_card_text(text: str, stem: str, notes: CardNotes, report: RuleReport) -> str:
+    """Render a card from rule YAML in memory (used by the web backend, which writes no files)."""
     rule = SigmaRule.from_yaml(text)
     raw = yaml.safe_load(text)
 
     out = [
-        GENERATED_NOTE.format(id=Path(rule_path).stem),
+        GENERATED_NOTE.format(id=stem),
         f"# {rule.title}",
         "",
-        f"`{Path(rule_path).stem}` · Sigma id `{rule.id}` · status `{rule.status}` · level `{rule.level}`",
+        f"`{stem}` · Sigma id `{rule.id}` · status `{rule.status}` · level `{rule.level}`",
         "",
         "## Goal",
         "",
