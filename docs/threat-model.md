@@ -103,6 +103,8 @@ for a human to review instead of going straight into the Frontline Pack.
 | ATT&CK data pinned by version, with the source SHA-256 recorded | `data/attack/README.md`, ADR 0002 |
 | No runtime network calls except the Anthropic API during `draft` / `run` (pySigma's network validators are off) | `validate.py` |
 | GitHub Actions use read-only `contents` permission | `.github/workflows/test.yml` |
+| Real attack recordings (OTRF) are untrusted downloads: pinned by repository commit and per-file SHA-256, read in memory only (never extracted), `.json` members only, size-capped; a hash mismatch discards the file | `data/datasets/otrf.yml`, `backtest.py` |
+| The RSigma binary used for the second-engine check is a pinned release (v0.27.0) verified by SHA-256 before it runs, and it runs only in CI's throwaway machine | `.github/workflows/test.yml` |
 
 ### T6: The public web backend (v0.2)
 
