@@ -165,9 +165,25 @@ Real per-user login (accounts, sessions, stored credentials) would add the most 
 code in a web app and make a stateless server stateful, to defend something with nothing
 in it. Revisit if Ringtail ever stores data or spends its own money per request.
 
+### T7: The browser extension (v0.3)
+
+The extension (ADR 0005) runs inside the user's browser, next to every site they visit.
+The threats are about what it could see, what could reach it, and where the key lives.
+
+| Threat | Control | Where |
+|---|---|---|
+| The extension reads pages or browsing data it doesn't need | No content scripts, no `scripting`, `tabs`, `activeTab`, or `<all_urls>`. The only page data it ever receives is the text the user highlighted and chose to send with the context menu. | `extension/manifest.json`, pytest manifest check |
+| A malicious page talks to the extension or injects into it | No `externally_connectable`, no `web_accessible_resources`, no content scripts: a page has no channel to the extension. MV3's default extension CSP blocks inline and remote scripts. | `manifest.json` |
+| Hostile text in the highlighted report (prompt injection) | Same as T1: the backend strips it to plain text and wraps it as data with a random nonce; every model reply goes through the same checks. | `sanitize.py`, `service.py` |
+| The key leaks from storage | Kept only in `chrome.storage.session`: in memory, wiped on browser quit, never on disk, not readable by websites. Never `storage.local` or `sync`. "Forget key" clears it. | `extension/sidepanel/` |
+| The key reaches the Ringtail backend | Same code as the web page: the key header goes only to `api.anthropic.com`, and the backend refuses any request carrying one. Unit-tested. | `ringtail-client.js`, `backend/app.py` |
+| A self-hosted backend URL is used to grab broad permissions | Optional host permission, requested at runtime for exactly the origin the user typed, after a click. Never granted at install. | `extension/sidepanel/` |
+| Model output injects script into the panel | Inserted with `textContent` only (shared rendering module); MV3 CSP blocks inline script. | `ringtail-ui.js` |
+| Tampered extension code | No remote code (MV3 forbids it). Store builds are signed and reviewed by Google; the zip on each GitHub release is built from the tagged commit. The shared modules can't drift from the tested web copies without failing CI. | CI, release process |
+
 ## Out of scope for now
 
-- The browser extension (v0.3). It gets its own section when built.
+- Firefox (different sidebar API) and Safari versions of the extension.
 - Fetching reports from URLs. Users paste text or pass a file. Fetching would add SSRF
   and content-type risks.
 - Defending against a compromised local machine or Python environment.
