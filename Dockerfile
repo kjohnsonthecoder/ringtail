@@ -22,5 +22,5 @@ COPY data/attack/enterprise-attack-20.1.index.json data/attack/
 RUN useradd --system --uid 10001 ringtail
 USER ringtail
 
-# Railway sets PORT. Proxy handling is done by the app (RINGTAIL_TRUST_PROXY), not uvicorn.
+# Railway sets PORT. Proxy handling is done by the app (RINGTAIL_CLIENT_IP_HEADER), not uvicorn.
 CMD ["sh", "-c", "exec uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8000} --no-server-header --no-proxy-headers"]

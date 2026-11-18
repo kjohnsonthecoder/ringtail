@@ -104,19 +104,22 @@ def test_unexpected_errors_do_not_leak(tmp_path, monkeypatch):
     assert "internals" not in r.text and "FAKE" not in r.text
 
 
-def test_rate_limit_keys_on_rightmost_forwarded_ip_behind_proxy(tmp_path):
-    c = TestClient(create_app(rate_per_minute=1, trust_proxy=True, web_dir=tmp_path))
-    req = {"stage": "extract", "input": "detect encoded powershell"}
-    # The client forges the leftmost entry each time; the proxy-written rightmost one is stable.
-    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "1.1.1.1, 203.0.113.7"}).status_code == 200
-    r = c.post("/api/prompt", json=req, headers={"x-forwarded-for": "2.2.2.2, 203.0.113.7"})
-    assert r.status_code == 429
+REQ = {"stage": "extract", "input": "detect encoded powershell"}
+
+
+def test_rate_limit_keys_on_the_configured_proxy_header(tmp_path):
+    c = TestClient(create_app(rate_per_minute=1, ip_header="x-real-ip", web_dir=tmp_path))
+    # Forged X-Forwarded-For values change every time; the proxy-set X-Real-IP doesn't.
+    h1 = {"x-real-ip": "203.0.113.7", "x-forwarded-for": "1.1.1.1"}
+    h2 = {"x-real-ip": "203.0.113.7", "x-forwarded-for": "2.2.2.2, 203.0.113.9"}
+    assert c.post("/api/prompt", json=REQ, headers=h1).status_code == 200
+    assert c.post("/api/prompt", json=REQ, headers=h2).status_code == 429
     # A different real client still gets through.
-    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "203.0.113.8"}).status_code == 200
+    assert c.post("/api/prompt", json=REQ, headers={"x-real-ip": "203.0.113.8"}).status_code == 200
 
 
-def test_forwarded_header_ignored_unless_proxy_trusted(tmp_path):
-    c = TestClient(create_app(rate_per_minute=1, web_dir=tmp_path))
-    req = {"stage": "extract", "input": "detect encoded powershell"}
-    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "198.51.100.1"}).status_code == 200
-    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "198.51.100.2"}).status_code == 429
+def test_proxy_headers_ignored_unless_configured(tmp_path):
+    c = TestClient(create_app(rate_per_minute=1, ip_header=None, web_dir=tmp_path))
+    assert c.post("/api/prompt", json=REQ, headers={"x-real-ip": "198.51.100.1"}).status_code == 200
+    assert c.post("/api/prompt", json=REQ, headers={"x-real-ip": "198.51.100.2",
+                                                     "x-forwarded-for": "198.51.100.3"}).status_code == 429

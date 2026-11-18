@@ -33,22 +33,19 @@ WEB_DIR = Path(os.environ.get("RINGTAIL_WEB_DIR", REPO_ROOT / "web"))
 # from the browser is a rule plus a handful of samples. 256 KiB covers both with room.
 MAX_BODY_BYTES = int(os.environ.get("RINGTAIL_MAX_BODY_BYTES", 256 * 1024))
 RATE_PER_MINUTE = int(os.environ.get("RINGTAIL_RATE_PER_MINUTE", 30))
-# Set to 1 only when the app sits behind exactly one reverse proxy that appends to
-# X-Forwarded-For (Railway's edge). Off by default so a direct client can't pick its IP.
-TRUST_PROXY = os.environ.get("RINGTAIL_TRUST_PROXY", "") == "1"
+# The header a trusted reverse proxy sets to the client's IP, overwriting anything the
+# client sent. Railway's edge: x-real-ip. Unset by default, so a direct client can't pick
+# its own IP. X-Forwarded-For is never used: on Railway it passes client-written entries
+# through, so any entry could be forged (found and tested live; see the threat model).
+CLIENT_IP_HEADER = os.environ.get("RINGTAIL_CLIENT_IP_HEADER", "").strip().lower() or None
 
 
-def client_ip(request: Request, trust_proxy: bool) -> str:
-    """The IP the rate limit keys on.
-
-    Behind a proxy we take the RIGHTMOST X-Forwarded-For entry: that's the one the proxy
-    itself wrote. Entries to its left come from the client and can be forged, which is why
-    uvicorn's --proxy-headers with a '*' allow-list (leftmost entry) isn't used here."""
-    if trust_proxy:
-        xff = request.headers.get("x-forwarded-for", "")
-        hops = [h.strip() for h in xff.split(",") if h.strip()]
-        if hops:
-            return hops[-1]
+def client_ip(request: Request, ip_header: str | None) -> str:
+    """The IP the rate limit keys on."""
+    if ip_header:
+        value = request.headers.get(ip_header, "").strip()
+        if value:
+            return value
     return request.client.host if request.client else "unknown"
 
 # Headers that would carry a key. This server has no use for one, so a request carrying
@@ -106,7 +103,7 @@ def _error(status: int, message: str, headers: dict | None = None) -> JSONRespon
     return JSONResponse({"error": message}, status_code=status, headers=headers)
 
 
-def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_BYTES, trust_proxy: bool = TRUST_PROXY,
+def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_BYTES, ip_header: str | None = CLIENT_IP_HEADER,
                web_dir: Path | None = WEB_DIR) -> FastAPI:
     # No interactive docs: Swagger UI loads scripts from a CDN, which the CSP forbids.
     app = FastAPI(title="Ringtail", docs_url=None, redoc_url=None)
@@ -125,7 +122,7 @@ def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_
             elif int(length) > max_body:
                 resp = _error(413, f"request body is over {max_body} bytes")
             else:
-                ip = client_ip(request, trust_proxy)
+                ip = client_ip(request, ip_header)
                 ok, retry = limiter.allow(ip)
                 if not ok:
                     resp = _error(429, "too many requests; slow down",
