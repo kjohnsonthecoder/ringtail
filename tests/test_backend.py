@@ -156,3 +156,12 @@ def test_busy_server_refuses_instead_of_queueing(tmp_path):
     r = c.post("/api/check", json={"draft": GOOD_DRAFT})
     assert r.status_code == 503 and r.headers["retry-after"] == "5"
     assert c.get("/api/health").status_code == 200
+
+
+def test_privacy_page_is_served_with_the_security_headers():
+    from backend.app import WEB_DIR
+    c = TestClient(create_app(web_dir=WEB_DIR))
+    r = c.get("/privacy.html")
+    assert r.status_code == 200
+    assert "never reaches the Ringtail server" in r.text
+    assert r.headers["content-security-policy"] == CSP

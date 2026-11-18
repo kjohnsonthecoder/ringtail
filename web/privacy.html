@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Ringtail privacy policy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <h1>Privacy policy</h1>
+      <p class="sub">Ringtail web page and the Ringtail "Highlight to Detect" browser extension.
+        Last updated 18 November 2026.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h2>The short version</h2>
+      <ul>
+        <li>Ringtail has no accounts, no analytics, no ads, and no tracking.</li>
+        <li>Your Anthropic API key never reaches the Ringtail server. It goes only from your browser to
+          Anthropic.</li>
+        <li>The text you choose to analyze goes to the Ringtail server to build a prompt and run checks, and
+          to Anthropic to draft the rule. The Ringtail server doesn't store it.</li>
+        <li>Nothing is sold or shared with anyone else.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>What data is handled, and where it goes</h2>
+      <p><strong>Your Anthropic API key.</strong> You type it in. It's sent only to
+        <code>api.anthropic.com</code> to call Claude. On the web page it lives in the page's memory and is
+        gone when you close or reload the tab. In the extension it's kept in the browser's session storage:
+        in memory, cleared when the browser quits, never written to disk, and not readable by websites. The
+        Ringtail server refuses any request that carries a key.</p>
+      <p><strong>Text you choose to analyze.</strong> On the web page, what you type or paste. In the
+        extension, only the text you highlight and send with "Detect with Ringtail", which you can edit before
+        anything is sent. The extension can't read the pages you visit. This text goes to:</p>
+      <ul>
+        <li>the Ringtail server, which cleans it into plain text, builds the prompt, and runs the checks on
+          the draft rule. It's processed in memory and not stored, and server logs record request paths
+          only, never request contents;</li>
+        <li>Anthropic, under your own API key and your own agreement with Anthropic, to draft the rule.</li>
+      </ul>
+      <p><strong>Drafts and results.</strong> The draft rule and samples Claude returns go to the Ringtail
+        server for checking, then are shown to you. They aren't stored on the server.</p>
+      <p><strong>Access code</strong> (only if a server owner turns one on). Sent only to that Ringtail
+        server, never to Anthropic. In the extension it's kept in session storage like the key.</p>
+      <p><strong>Extension settings.</strong> The server address and model name you choose are saved in the
+        browser's local extension storage on your device. They aren't secret and never leave your browser
+        except as the address the extension connects to.</p>
+      <p><strong>Network metadata.</strong> Like any website, the server and its host (Railway) see your IP
+        address, which the server uses in memory to rate-limit requests. It isn't stored by Ringtail.</p>
+    </section>
+
+    <section class="panel">
+      <h2>What Ringtail doesn't do</h2>
+      <ul>
+        <li>No cookies, no analytics, no third-party scripts, no advertising.</li>
+        <li>No access to your browsing history or the content of pages you visit.</li>
+        <li>No selling, renting, or sharing of data, and no use of data for anything other than drafting
+          and checking detection rules.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Self-hosting and contact</h2>
+      <p>Ringtail is open source (MIT). You can run your own server and point the extension at it, in which
+        case your text goes to your server instead. The code, threat model, and design decisions are public:
+        <a href="https://github.com/kjohnsonthecoder/ringtail" rel="noopener noreferrer" target="_blank">github.com/kjohnsonthecoder/ringtail</a>.
+        Questions or concerns: open an issue there.</p>
+      <p><a href="./">Back to Ringtail</a></p>
+    </section>
+  </main>
+</body>
+</html>
