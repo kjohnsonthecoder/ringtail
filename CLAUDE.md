@@ -196,7 +196,7 @@ Definition of done for v0.3:
 - [x] `node --test` unit tests for the shared loop in CI
 - [x] Privacy policy published; store listing, icons, and screenshots ready (`docs/store/`)
 - [x] Extension zip attached to a GitHub release; README section with a screenshot
-- [ ] Submitted to the Chrome Web Store (Kevin submits; review time is Google's)
+- [x] Submitted to the Chrome Web Store (Kevin, 2026-11-18; in review — add the store link to README when approved)
 
 ---
 
