@@ -7,14 +7,15 @@ description: |
   acting. Failed attempts (errorCode such as AccessDenied) are included on purpose: someone
   trying to stop logging is worth a look even if the call was blocked.
 references:
-  - https://attack.mitre.org/techniques/T1562/008/
+  - https://attack.mitre.org/techniques/T1685/002/
   - https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html
   - https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_DeleteTrail.html
 author: Kevin Johnson (Ringtail Frontline Pack)
 date: 2026-11-17
 tags:
-  - attack.defense-evasion
-  - attack.t1562.008
+  # ATT&CK v20 revoked T1562.008 in favor of T1685.002 and split Defense Evasion.
+  - attack.defense-impairment
+  - attack.t1685.002
 logsource:
   product: aws
   service: cloudtrail

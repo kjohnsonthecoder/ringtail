@@ -9,8 +9,10 @@ Catch anyone turning off or deleting an AWS CloudTrail trail. CloudTrail is the 
 
 ## ATT&CK
 
-- [T1562.008](https://attack.mitre.org/techniques/T1562/008/)
-- Tactic: Defense Evasion
+- [T1685.002](https://attack.mitre.org/techniques/T1685/002/) Disable or Modify Cloud Log
+- Tactic: Defense Impairment (TA0112)
+
+Checked against pinned ATT&CK v20.1 by `ringtail validate`.
 
 ## Log source
 
@@ -58,6 +60,6 @@ Samples: `tests/rules/aws_cloudtrail_logging_disabled/`
 
 ## References
 
-- <https://attack.mitre.org/techniques/T1562/008/>
+- <https://attack.mitre.org/techniques/T1685/002/>
 - <https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html>
 - <https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_DeleteTrail.html>

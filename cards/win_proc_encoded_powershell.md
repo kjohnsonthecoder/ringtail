@@ -9,8 +9,10 @@ Catch PowerShell being run with a base64-encoded command, so the real script is 
 
 ## ATT&CK
 
-- [T1059.001](https://attack.mitre.org/techniques/T1059/001/)
-- Tactic: Execution
+- [T1059.001](https://attack.mitre.org/techniques/T1059/001/) PowerShell
+- Tactic: Execution (TA0002)
+
+Checked against pinned ATT&CK v20.1 by `ringtail validate`.
 
 ## Log source
 

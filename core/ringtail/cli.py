@@ -8,8 +8,10 @@ from typing import List, Optional
 
 import typer
 
+from ringtail.attack import AttackDataError, default_index
 from ringtail.card import CardNotesError, build_card
 from ringtail.testrunner import discover_rules, run_rule_tests
+from ringtail.validate import validate_rule
 
 app = typer.Typer(
     help="Ringtail: plain English in, rules that must fire out.",
@@ -104,9 +106,43 @@ def card(
 
 
 @app.command()
-def validate(rule: Path) -> None:
-    """pySigma + ATT&CK checks (coming next)."""
-    _not_yet("validate")
+def validate(
+    paths: List[Path] = typer.Argument(..., help="Rule files, or directories to search for *.yml rules."),
+    as_json: bool = typer.Option(False, "--json", help="Print machine-readable results."),
+) -> None:
+    """pySigma parse + lint, required metadata, and ATT&CK IDs against the pinned version."""
+    rules = _resolve_rules(paths)
+    try:
+        index = default_index()
+    except AttackDataError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    reports = [validate_rule(r, index) for r in rules]
+    if as_json:
+        typer.echo(json.dumps([r.to_dict() for r in reports], indent=2))
+    else:
+        for r in reports:
+            techs = ", ".join(f"{t.id} {t.name}" for t in r.techniques) or "no valid technique"
+            typer.echo(f"{'PASS' if r.passed else 'FAIL'}  {r.rule_path.as_posix()}  [{techs}]")
+            for e in r.errors:
+                typer.echo(f"      error: {e}")
+            for w in r.warnings:
+                typer.echo(f"      warning: {w}")
+        typer.echo(f"\n{sum(r.passed for r in reports)}/{len(reports)} rules valid (ATT&CK v{index.version}).")
+    raise typer.Exit(EXIT_PASS if all(r.passed for r in reports) else EXIT_FAIL)
+
+
+def _resolve_rules(paths: List[Path]) -> List[Path]:
+    missing = [p for p in paths if not p.exists()]
+    if missing:
+        typer.echo(f"No such file or directory: {', '.join(map(str, missing))}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    rules = discover_rules(paths)
+    if not rules:
+        typer.echo("No rules found.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    return rules
 
 
 @app.command()
