@@ -102,9 +102,29 @@ for a human to review instead of going straight into the Frontline Pack.
 | No runtime network calls except the Anthropic API during `draft` / `run` (pySigma's network validators are off) | `validate.py` |
 | GitHub Actions use read-only `contents` permission | `.github/workflows/test.yml` |
 
-## Out of scope for v0.1
+### T6: The public web backend (v0.2)
 
-- The web page, backend, and browser extension. They get their own section when built.
+The backend (`backend/app.py`, ADR 0003) is unauthenticated and on the internet. It never
+calls Claude and never sees a key: the browser calls Claude directly with the user's key.
+
+| Threat | Control | Where |
+|---|---|---|
+| A key reaches our server (client bug, confused user) | Requests carrying `Authorization`, `x-api-key`, or `anthropic-api-key` are refused before the body is read. Input text containing an `sk-ant-` key is refused, never put into a prompt. Errors never echo request content. | `backend/app.py` `guard`, `service.build_prompt` |
+| Client puts its own instructions into the retry prompt | The retry prompt's error list is recomputed by code from the failed draft. Client-supplied errors are ignored. | `service.build_prompt` |
+| Oversized or endless requests | `Content-Length` required on POST; bodies over 256 KiB get 413. Input over 60k characters is refused by `sanitize`. | `backend/app.py`, `sanitize.py` |
+| Flooding `/api/check` (CPU-bound pySigma + matcher) | Per-IP limit, 30 POSTs per minute; checks run in a worker thread, off the event loop. | `RateLimiter`, `create_app` |
+| Leaking internals | Unexpected errors return a bare `internal error`. No interactive docs. Access logs record paths, not bodies or headers. | `create_app` |
+| Cross-site use of the API | No CORS headers at all: the page is served from the same origin, so other sites' pages can't read responses. | `create_app` |
+| Script injection into the page (which holds the key) | Strict CSP: scripts and styles from `'self'` only, network only to `'self'` and `api.anthropic.com`, no framing. The page will render model output as text, never HTML. | `SECURITY_HEADERS` |
+| The browser skips the checks and shows an unchecked draft | Accepted: it only fools the user running it. A rule is trusted only once committed and green in CI, which reruns every check. | ADR 0003 |
+
+Limits of the current controls: the rate limiter is in memory, per process, and resets on
+restart. It's sized for one small instance. Behind Railway's proxy it needs uvicorn's
+`--proxy-headers` so the limit applies to the real client IP.
+
+## Out of scope for now
+
+- The browser extension (v0.3). It gets its own section when built.
 - Fetching reports from URLs. Users paste text or pass a file. Fetching would add SSRF
   and content-type risks.
 - Defending against a compromised local machine or Python environment.
