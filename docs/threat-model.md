@@ -112,7 +112,8 @@ calls Claude and never sees a key: the browser calls Claude directly with the us
 | A key reaches our server (client bug, confused user) | Requests carrying `Authorization`, `x-api-key`, or `anthropic-api-key` are refused before the body is read. Input text containing an `sk-ant-` key is refused, never put into a prompt. Errors never echo request content. | `backend/app.py` `guard`, `service.build_prompt` |
 | Client puts its own instructions into the retry prompt | The retry prompt's error list is recomputed by code from the failed draft. Client-supplied errors are ignored. | `service.build_prompt` |
 | Oversized or endless requests | `Content-Length` required on POST; bodies over 256 KiB get 413. Input over 60k characters is refused by `sanitize`. | `backend/app.py`, `sanitize.py` |
-| Flooding `/api/check` (CPU-bound pySigma + matcher) | Per-IP limit, 30 POSTs per minute; checks run in a worker thread, off the event loop. | `RateLimiter`, `create_app` |
+| Flooding `/api/check` (CPU-bound pySigma + matcher) | Per-IP limit, 30 POSTs per minute. Server-wide, at most 4 checks run at once (`RINGTAIL_MAX_CONCURRENT`); extra requests get an immediate 503 with `Retry-After` instead of queueing, so many IPs at once can't pile up work. Checks run in a worker thread, off the event loop. | `RateLimiter`, `create_app` |
+| Cost abuse of a public demo | Optional access code (`RINGTAIL_ACCESS_CODE`): when set, every API POST needs it in `x-ringtail-access-code`. Compared in constant time, and checked after the rate limit, so each wrong guess spends one of the 30 a minute. Off by default; turned on or off by setting the variable on the host, with no code change. | `access_ok`, `guard` |
 | Leaking internals | Unexpected errors return a bare `internal error`. No interactive docs. Access logs record paths, not bodies or headers. | `create_app` |
 | Cross-site use of the API | No CORS headers at all: the page is served from the same origin, so other sites' pages can't read responses. | `create_app` |
 | Script injection into the page (which holds the key) | Strict CSP: scripts and styles from `'self'` only, network only to `'self'` and `api.anthropic.com`, no framing. The page inserts model output with `textContent` only, and card notes are HTML-escaped outside code spans, so a downloaded card can't carry raw HTML either. | `SECURITY_HEADERS` |
@@ -134,6 +135,33 @@ with the real client IP. Verified live: with both `X-Real-IP` and `X-Forwarded-F
 forged to a new value on every request, the 31st request still got a 429. The setting is
 off by default, so a server that isn't behind such a proxy never trusts a client-supplied
 header. uvicorn's own `--proxy-headers` is off too. Tested in `tests/test_backend.py`.
+
+### Why there's no login
+
+A login would protect the server, and the server has almost nothing to steal: no keys, no
+stored data, no database. Visitors' keys are only at risk if someone changes the page's
+JavaScript, and the only ways to do that are a push to `main` (which auto-deploys) or
+editing the Railway service. A login on the website does nothing about either.
+
+```mermaid
+flowchart LR
+    A["Attacker"] -.->|"cost abuse"| S["Public API<br/>(optional access code)"]
+    A -.->|"account takeover"| G["GitHub / Railway"]
+    G -->|"deploys"| P["Page JavaScript<br/>sees every visitor's key"]
+```
+
+So the controls go where the risk is:
+
+- **The deploy path:** passkeys or 2FA on the GitHub and Railway accounts, and branch
+  protection on `main` that requires CI to pass. These are account settings, not code.
+- **Cost abuse:** the per-IP rate limit, the server-wide concurrency cap, a Railway spend
+  limit, and the optional access code for when the demo shouldn't be fully public.
+- **Visitors' own exposure:** the page suggests a separate key with a low spend limit, so
+  even a leaked key has a capped cost.
+
+Real per-user login (accounts, sessions, stored credentials) would add the most bug-prone
+code in a web app and make a stateless server stateful, to defend something with nothing
+in it. Revisit if Ringtail ever stores data or spends its own money per request.
 
 ## Out of scope for now
 
