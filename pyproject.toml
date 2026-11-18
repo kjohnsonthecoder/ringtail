@@ -21,7 +21,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+web = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
+# httpx powers FastAPI's TestClient, used by the backend tests.
+dev = ["pytest>=8", "httpx>=0.27", "fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
 
 [project.scripts]
 ringtail = "ringtail.cli:app"
@@ -34,3 +36,5 @@ ringtail = ["prompts/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Repo root on sys.path so tests can import backend.app (the backend is not part of the wheel).
+pythonpath = ["."]
