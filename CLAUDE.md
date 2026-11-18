@@ -166,25 +166,36 @@ Known false positives · Triage steps · Test results (TP/FP pass) · References
 Highlight text in a threat report on any site → right-click "Detect with Ringtail" → a side
 panel runs the same loop as the web page → a proven rule with cards and SIEM queries.
 
-Design intent (to be confirmed and recorded in ADR 0005 before building):
-- Chrome/Edge Manifest V3. The selected text comes from the context-menu click itself, so
-  **no content scripts and no access to page content**. Permissions: `contextMenus`,
-  `sidePanel`, `storage`; host access only to `api.anthropic.com` and the Ringtail backend.
+Decisions (Kevin, 2026-11-18; record in ADR 0005 before building):
+- **Chrome/Edge Manifest V3.** The selected text comes from the context-menu click itself,
+  so **no content scripts and no access to page content**. Permissions: `contextMenus`,
+  `sidePanel`, `storage`; host access only to `api.anthropic.com` and the live backend.
+- **Key storage: `chrome.storage.session`.** Survives closing the panel, wiped when the
+  browser quits, never on disk, not readable by websites. Never `storage.local`/`sync`.
+- **Backend: the live Railway URL by default, configurable** for self-hosters. A custom URL
+  is granted at runtime through `optional_host_permissions` + `chrome.permissions.request`,
+  so the install never asks for access to every site.
+- **Distribution: GitHub release zip and the Chrome Web Store.** Needs store-ready assets
+  (icons, screenshots, listing text), a privacy policy page, and per-permission
+  justifications. Kevin creates the developer account (the $5 fee is his to pay) and
+  submits; Claude prepares everything else.
+- **JS tests: Node's built-in test runner** (`node --test`, no npm packages) in CI.
 - Same split as the web page: the side panel holds the key and calls Claude; the backend
-  builds prompts and runs checks. Key handling and backend choice are open decisions.
-- Share the loop code with `web/app.js` instead of copying it; MV3 forbids remote code, so
-  the extension ships its own copy and CI checks it matches.
+  builds prompts and runs checks. The shared loop code moves into one module used by both
+  `web/` and `extension/`; MV3 forbids remote code, so the extension ships a copy and CI
+  checks it matches.
 - Threat model section T7 (extension): permissions, key storage, hostile page selections,
   no remote code, update and store-review path.
-- Distribution starts as "load unpacked" plus a zip on the GitHub release. Publishing to
-  the Chrome Web Store needs Kevin's yes and his developer account.
 
 Definition of done for v0.3:
 - [ ] ADR 0005 and threat-model T7 written before code
 - [ ] Highlight → right-click → side panel produces a proven rule against the live backend
 - [ ] Key never reaches the Ringtail backend; extension requests no page access
-- [ ] Shared client code with a CI check that the web and extension copies match
+- [ ] Shared client module used by web and extension; CI checks the copies match
+- [ ] `node --test` unit tests for the shared loop in CI
+- [ ] Privacy policy published; store listing, icons, and screenshots ready
 - [ ] Extension zip attached to a GitHub release; README section with a screenshot
+- [ ] Submitted to the Chrome Web Store (Kevin submits; review time is Google's)
 
 ---
 
