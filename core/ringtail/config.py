@@ -18,6 +18,29 @@ def has_credentials() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
 
 
+def key_problem() -> str | None:
+    """Describe a malformed ANTHROPIC_API_KEY without ever echoing it.
+
+    A key with whitespace or a non-ASCII character (a smart quote or an ellipsis from
+    copy-paste) is not a valid HTTP header value, so the request fails before it is sent
+    and the SDK reports it as a connection error. Catch that here with a clear message.
+    """
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        return None
+    if key != key.strip():
+        return "ANTHROPIC_API_KEY has leading or trailing whitespace (often a pasted newline)."
+    for i, ch in enumerate(key):
+        if not ("\x21" <= ch <= "\x7e"):
+            return (
+                f"ANTHROPIC_API_KEY has an invalid character at position {i + 1} of {len(key)} "
+                "(a space, smart quote, or '…' from copy-paste). Set it again, typing the quotes yourself."
+            )
+    if key[0] in "\"'" or key[-1] in "\"'":
+        return "ANTHROPIC_API_KEY includes quote characters. Set it without the surrounding quotes in the value."
+    return None
+
+
 BYOK_MESSAGE = (
     "Ringtail is BYOK (bring your own key): set ANTHROPIC_API_KEY in your environment.\n"
     "  PowerShell:  $env:ANTHROPIC_API_KEY = '<your key>'\n"

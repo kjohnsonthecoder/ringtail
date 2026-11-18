@@ -39,6 +39,9 @@ class AnthropicLLM:
 
         if not config.has_credentials():
             raise LLMConfigError(config.BYOK_MESSAGE)
+        problem = config.key_problem()
+        if problem:
+            raise LLMConfigError(problem)
         self._anthropic = anthropic
         self.client = anthropic.Anthropic(max_retries=3)
         self.model = model or config.model()
@@ -72,8 +75,8 @@ class AnthropicLLM:
             raise LLMError(f"{purpose}: rate limited after retries; try again shortly") from None
         except a.APIStatusError as e:
             raise LLMError(f"{purpose}: API error {e.status_code}") from None
-        except a.APIConnectionError:
-            raise LLMError(f"{purpose}: could not reach the Anthropic API") from None
+        except a.APIConnectionError as e:
+            raise LLMError(f"{purpose}: could not reach the Anthropic API ({cause_chain(e)})") from None
 
         u = response.usage
         self.usage.append({"purpose": purpose, "input": u.input_tokens, "output": u.output_tokens})
@@ -88,6 +91,27 @@ class AnthropicLLM:
         if text is None:
             raise LLMError(f"{purpose}: reply had no text block")
         return parse_json_object(text, purpose)
+
+
+def cause_chain(exc: BaseException, limit: int = 5) -> str:
+    """Exception type names only, e.g. 'APIConnectionError <- ConnectError <- SSLError'.
+
+    Never include messages: some HTTP-layer errors quote header values, which would print
+    the API key (docs/threat-model.md, T3)."""
+    names, cur, seen = [], exc, set()
+    while cur is not None and id(cur) not in seen and len(names) < limit:
+        seen.add(id(cur))
+        names.append(type(cur).__name__)
+        cur = cur.__cause__ or cur.__context__
+    hint = ""
+    joined = " ".join(names)
+    if "SSL" in joined or "Certificate" in joined:
+        hint = "; a proxy or antivirus may be intercepting HTTPS"
+    elif "Timeout" in joined:
+        hint = "; the network is slow or blocking api.anthropic.com"
+    elif "Protocol" in joined or "Encode" in joined:
+        hint = "; often a malformed API key value"
+    return " <- ".join(names) + hint
 
 
 def parse_json_object(text: str, purpose: str) -> dict[str, Any]:
