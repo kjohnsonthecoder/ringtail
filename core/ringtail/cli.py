@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import typer
 
+from ringtail.card import CardNotesError, build_card
 from ringtail.testrunner import discover_rules, run_rule_tests
 
 app = typer.Typer(
@@ -61,6 +62,45 @@ def test(
         typer.echo(f"\n{n_pass}/{len(reports)} rules passed.")
 
     raise typer.Exit(EXIT_PASS if all(r.passed for r in reports) else EXIT_FAIL)
+
+
+@app.command()
+def card(
+    paths: List[Path] = typer.Argument(..., help="Rule files, or directories to search for *.yml rules."),
+    check: bool = typer.Option(False, "--check", help="Don't write. Exit 1 if any committed card is stale."),
+) -> None:
+    """Generate cards/<rule-id>.md from the rule, its test results, and cards/<rule-id>.yml."""
+    missing = [p for p in paths if not p.exists()]
+    if missing:
+        typer.echo(f"No such file or directory: {', '.join(map(str, missing))}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    rules = discover_rules(paths)
+    if not rules:
+        typer.echo("No rules found.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    ok = True
+    for rule_path in rules:
+        try:
+            card_path, text, report = build_card(rule_path)
+        except CardNotesError as e:
+            typer.echo(f"FAIL  {rule_path.as_posix()}: {e}")
+            ok = False
+            continue
+        if not report.passed:
+            ok = False
+        current = card_path.read_text(encoding="utf-8") if card_path.is_file() else None
+        if check:
+            fresh = current is not None and current.replace("\r\n", "\n") == text
+            typer.echo(f"{'OK   ' if fresh else 'STALE'}  {card_path.as_posix()}")
+            ok = ok and fresh
+        else:
+            card_path.write_text(text, encoding="utf-8", newline="\n")
+            status = "wrote" if report.passed else "wrote (rule tests FAIL)"
+            typer.echo(f"{status}  {card_path.as_posix()}")
+    if check and not ok:
+        typer.echo("\nRegenerate with: ringtail card rules/", err=True)
+    raise typer.Exit(EXIT_PASS if ok else EXIT_FAIL)
 
 
 @app.command()

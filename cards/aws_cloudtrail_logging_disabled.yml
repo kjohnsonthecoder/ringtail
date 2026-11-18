@@ -1,0 +1,41 @@
+# Human judgment for the card. Everything else in cards/aws_cloudtrail_logging_disabled.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch anyone turning off or deleting an AWS CloudTrail trail. CloudTrail is the audit
+  log for the whole account, so stopping it is how an attacker hides what they do next.
+  Even a blocked attempt tells you a principal is trying to go dark.
+
+summary: >-
+  Fires on any CloudTrail API call named StopLogging or DeleteTrail, whether it succeeded
+  or was denied. Read-only calls that check trails (DescribeTrails, GetTrailStatus) and
+  StartLogging, which turns logging back on, don't fire.
+
+triage:
+  - >-
+    Identify who did it: `userIdentity.arn` and `userIdentity.type`. For an `AssumedRole`,
+    use `sessionContext.sessionIssuer` and the matching `AssumeRole` event to trace back to
+    the original user or service.
+  - >-
+    Check whether it worked. If `errorCode` is set (for example `AccessDenied`), logging is
+    still on, but the principal was probing. Treat it as a possible compromised credential
+    either way.
+  - >-
+    Confirm the current trail state with
+    `aws cloudtrail get-trail-status --name <trail>`. If it's stopped and nobody planned it,
+    turn it back on with `aws cloudtrail start-logging --name <trail>`, or recreate the
+    trail, before you dig further.
+  - >-
+    Look for a reason: a change ticket, an infrastructure-as-code pipeline run, or a
+    migration to an organization trail. No matching change means escalate.
+  - >-
+    Check `sourceIPAddress` and `userAgent`. An unfamiliar IP or network, or an attacker
+    toolkit user agent, raises severity.
+  - >-
+    Review everything this principal did shortly before and after, in every region: IAM
+    changes, new access keys, GuardDuty findings, data access. Remember the gap: anything
+    after the stop may only be visible in an organization trail, CloudTrail Lake, or
+    GuardDuty.
+  - >-
+    If it wasn't authorized: disable the access keys or revoke the role's sessions, restore
+    logging, and add an SCP that denies `cloudtrail:StopLogging` and
+    `cloudtrail:DeleteTrail` outside a break-glass role.

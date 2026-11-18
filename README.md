@@ -42,10 +42,14 @@ pytest
 
 ## Frontline Pack
 
-| Rule | ATT&CK | Tests |
-|---|---|---|
-| [PowerShell launched with an encoded command](rules/frontline-pack/windows/win_proc_encoded_powershell.yml) | T1059.001 | 4 TP / 3 FP |
-| [AWS CloudTrail logging stopped or trail deleted](rules/frontline-pack/cloudtrail/aws_cloudtrail_logging_disabled.yml) | T1562.008 | 3 TP / 4 FP |
+| Rule | ATT&CK | Tests | Card |
+|---|---|---|---|
+| [PowerShell launched with an encoded command](rules/frontline-pack/windows/win_proc_encoded_powershell.yml) | T1059.001 | 4 TP / 3 FP | [card](cards/win_proc_encoded_powershell.md) |
+| [AWS CloudTrail logging stopped or trail deleted](rules/frontline-pack/cloudtrail/aws_cloudtrail_logging_disabled.yml) | T1562.008 | 3 TP / 4 FP | [card](cards/aws_cloudtrail_logging_disabled.md) |
+
+Each card covers the goal, ATT&CK mapping, log source, logic in plain English, known false
+positives, triage steps, and live test results. Cards are generated (`ringtail card rules/`)
+and CI fails if one is stale.
 
 Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_positive.json`
 (every event must match) and `false_positive.json` (no event may match).

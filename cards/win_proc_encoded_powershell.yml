@@ -1,0 +1,38 @@
+# Human judgment for the card. Everything else in cards/win_proc_encoded_powershell.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch PowerShell being run with a base64-encoded command, so the real script is hidden
+  from anyone reading the command line. It's a staple of malicious Office macros, phishing
+  loaders, and post-exploitation frameworks.
+
+summary: >-
+  Fires when a process is PowerShell (Windows PowerShell or PowerShell 7, matched by path
+  or by the original file name in the PE header, which catches renamed copies) and its
+  command line uses -EncodedCommand or any abbreviation PowerShell accepts for it
+  (-e, -en, -enc, -enco..., -ec). Slashes and look-alike dashes count too.
+
+triage:
+  - >-
+    Decode the payload. It's base64 of UTF-16LE text. In PowerShell:
+    `[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('<b64>'))`, or CyberChef
+    "From Base64" then "Decode text (UTF-16LE)". Do this on an analysis box, never by
+    running the command.
+  - >-
+    Check the parent process. Office apps, browsers, `wscript.exe`, `mshta.exe`, or
+    `explorer.exe` from a user session are high suspicion. Management agents
+    (`CcmExec.exe`, `IntuneManagementExtension.exe`, a known RMM agent) are usually benign;
+    confirm against your baseline.
+  - >-
+    Look at what the decoded script does: downloads (`DownloadString`, `Invoke-WebRequest`,
+    `Net.WebClient`), `IEX`, AMSI or Defender tampering, credential access. If PowerShell
+    Script Block Logging is on, event 4104 shows the decoded content too.
+  - >-
+    If `Image` isn't `powershell.exe` or `pwsh.exe` but `OriginalFileName` is, someone
+    renamed PowerShell to blend in. Escalate.
+  - >-
+    Pull follow-on activity from the same process and host: network connections (Sysmon 3),
+    child processes, file writes, and logons around that time. Check whether the user
+    normally runs admin scripts.
+  - >-
+    If it's malicious: isolate the host, preserve evidence, and hunt the decoded indicators
+    (URLs, hashes, file names) across the rest of the fleet.

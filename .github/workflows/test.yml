@@ -23,3 +23,5 @@ jobs:
         run: pytest -q
       - name: Rule tests (true positive / false positive replay)
         run: ringtail test rules/
+      - name: Detection cards are up to date
+        run: ringtail card rules/ --check
