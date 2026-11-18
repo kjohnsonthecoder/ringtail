@@ -195,7 +195,7 @@ Definition of done for v0.3:
 - [x] Shared client module used by web and extension; CI checks the copies match
 - [x] `node --test` unit tests for the shared loop in CI
 - [x] Privacy policy published; store listing, icons, and screenshots ready (`docs/store/`)
-- [ ] Extension zip attached to a GitHub release; README section with a screenshot
+- [x] Extension zip attached to a GitHub release; README section with a screenshot
 - [ ] Submitted to the Chrome Web Store (Kevin submits; review time is Google's)
 
 ---
