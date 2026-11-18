@@ -186,6 +186,113 @@ def convert(
     raise typer.Exit(EXIT_PASS if ok else EXIT_FAIL)
 
 
+def _stale(path: Path, text: str) -> bool:
+    return not path.exists() or path.read_text(encoding="utf-8").replace("\r\n", "\n") != text
+
+
+def _write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+@app.command()
+def backtest(
+    rules_dir: Path = typer.Option(Path("rules"), "--rules", help="Rules to replay."),
+    check: bool = typer.Option(False, "--check", help="Don't write. Exit 1 if the committed report is stale."),
+    offline: bool = typer.Option(False, "--offline", help="Use only cached recordings; never download."),
+) -> None:
+    """Replay real attack recordings (OTRF, pinned) against every rule (ADR 0006)."""
+    from ringtail import backtest as bt
+
+    try:
+        manifest = bt.load_manifest()
+        rules = bt.load_rules(_resolve_rules([rules_dir]))
+        report = bt.run(rules, manifest, bt.events_by_dataset(manifest, offline=offline))
+    except bt.BacktestError as e:
+        typer.echo(f"backtest: {e}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    t = report["totals"]
+    typer.echo(f"{t['datasets']} recordings, {t['events']:,} events. "
+               f"{t['rules_proven_on_real_data']} rules fired on real attacks, {t['gaps_documented']} documented gaps, "
+               f"{t['unexpected']} unexpected, {t['regressions']} regressions.")
+    for r in report["rules"]:
+        ev = ", ".join(d["dataset"] for d in r["detected"]) or "samples only"
+        typer.echo(f"  {r['rule']}: {ev}" + (f"  ({len(r['gaps'])} gaps)" if r["gaps"] else ""))
+
+    ok = True
+    for p in bt.problems(report):
+        typer.echo(f"FAIL  {p}")
+        ok = False
+    outputs = {bt.REPORT_JSON: bt.to_json(report), bt.REPORT_MD: bt.to_markdown(report)}
+    for path, text in outputs.items():
+        if check:
+            if _stale(path, text):
+                typer.echo(f"STALE {path.relative_to(bt.ROOT).as_posix()} (run: ringtail backtest)")
+                ok = False
+        else:
+            _write(path, text)
+            typer.echo(f"wrote {path.relative_to(bt.ROOT).as_posix()}")
+    raise typer.Exit(EXIT_PASS if ok else EXIT_FAIL)
+
+
+@app.command()
+def crosscheck(
+    rules_dir: Path = typer.Option(Path("rules"), "--rules", help="Rules to check."),
+    rsigma: Optional[str] = typer.Option(None, "--rsigma", help="Path to the rsigma binary (default: on PATH)."),
+    require: bool = typer.Option(False, "--require", help="Fail if RSigma isn't available (CI)."),
+    real_data: bool = typer.Option(True, "--real-data/--samples-only", help="Also compare on the cached real recordings."),
+) -> None:
+    """Compare Ringtail's matcher with RSigma, an independent Sigma engine (ADR 0006)."""
+    from ringtail import backtest as bt
+    from ringtail import crosscheck as xc
+
+    cmd = xc.find_rsigma(rsigma)
+    if cmd is None:
+        typer.echo("RSigma not found; cross-check skipped (CI runs it with a pinned release).",
+                   err=require)
+        raise typer.Exit(EXIT_USAGE if require else EXIT_PASS)
+    rules = bt.load_rules(_resolve_rules([rules_dir]))
+    events = None
+    if real_data:
+        try:
+            events = bt.events_by_dataset(bt.load_manifest(), offline=True)
+        except bt.BacktestError as e:
+            typer.echo(f"crosscheck: {e} (run `ringtail backtest` first, or pass --samples-only)", err=True)
+            raise typer.Exit(EXIT_USAGE)
+    rep = xc.run(cmd, rules, events)
+    typer.echo(f"Compared {rep.checked_samples} samples and {rep.checked_recordings} rule/recording pairs "
+               f"with RSigma: {len(rep.disagreements)} disagreements.")
+    for d in rep.disagreements:
+        typer.echo(f"DISAGREE  {d}")
+    raise typer.Exit(EXIT_FAIL if rep.disagreements else EXIT_PASS)
+
+
+@app.command()
+def coverage(
+    rules_dir: Path = typer.Option(Path("rules"), "--rules", help="Rules to plot."),
+    check: bool = typer.Option(False, "--check", help="Don't write. Exit 1 if a committed image is stale."),
+) -> None:
+    """Draw the rules on the ATT&CK tactic line under Kill Chain phases (SVG)."""
+    from ringtail import backtest as bt
+    from ringtail import coverage as cv
+
+    svg = cv.render(_resolve_rules([rules_dir]), cv.load_report(bt.REPORT_JSON), default_index().version)
+    ok = True
+    for path in cv.OUTPUTS:
+        rel = path.relative_to(cv.ROOT).as_posix()
+        if check:
+            if _stale(path, svg):
+                typer.echo(f"STALE {rel} (run: ringtail coverage)")
+                ok = False
+            else:
+                typer.echo(f"OK    {rel}")
+        else:
+            _write(path, svg)
+            typer.echo(f"wrote {rel}")
+    raise typer.Exit(EXIT_PASS if ok else EXIT_FAIL)
+
+
 def _resolve_rules(paths: List[Path]) -> List[Path]:
     missing = [p for p in paths if not p.exists()]
     if missing:
