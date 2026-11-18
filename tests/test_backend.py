@@ -102,3 +102,21 @@ def test_unexpected_errors_do_not_leak(tmp_path, monkeypatch):
     r = c.post("/api/check", content=json.dumps({"draft": {}}), headers={"content-type": "application/json"})
     assert r.status_code == 500
     assert "internals" not in r.text and "FAKE" not in r.text
+
+
+def test_rate_limit_keys_on_rightmost_forwarded_ip_behind_proxy(tmp_path):
+    c = TestClient(create_app(rate_per_minute=1, trust_proxy=True, web_dir=tmp_path))
+    req = {"stage": "extract", "input": "detect encoded powershell"}
+    # The client forges the leftmost entry each time; the proxy-written rightmost one is stable.
+    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "1.1.1.1, 203.0.113.7"}).status_code == 200
+    r = c.post("/api/prompt", json=req, headers={"x-forwarded-for": "2.2.2.2, 203.0.113.7"})
+    assert r.status_code == 429
+    # A different real client still gets through.
+    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "203.0.113.8"}).status_code == 200
+
+
+def test_forwarded_header_ignored_unless_proxy_trusted(tmp_path):
+    c = TestClient(create_app(rate_per_minute=1, web_dir=tmp_path))
+    req = {"stage": "extract", "input": "detect encoded powershell"}
+    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "198.51.100.1"}).status_code == 200
+    assert c.post("/api/prompt", json=req, headers={"x-forwarded-for": "198.51.100.2"}).status_code == 429

@@ -120,8 +120,13 @@ calls Claude and never sees a key: the browser calls Claude directly with the us
 | The browser skips the checks and shows an unchecked draft | Accepted: it only fools the user running it. A rule is trusted only once committed and green in CI, which reruns every check. | ADR 0003 |
 
 Limits of the current controls: the rate limiter is in memory, per process, and resets on
-restart. It's sized for one small instance. Behind Railway's proxy it needs uvicorn's
-`--proxy-headers` so the limit applies to the real client IP.
+restart. It's sized for one small instance (one Railway replica).
+
+Behind Railway's proxy, `RINGTAIL_TRUST_PROXY=1` makes the limit key on the **rightmost**
+`X-Forwarded-For` entry, the one the proxy wrote. A client can prepend forged entries
+but can't change that one. uvicorn's own `--proxy-headers` is turned off: with a `*`
+allow-list it would pick the leftmost, client-controlled entry, and anyone could dodge
+the limit by sending a fresh fake IP each time. Tested in `tests/test_backend.py`.
 
 ## Out of scope for now
 
