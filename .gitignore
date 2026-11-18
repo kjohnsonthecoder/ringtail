@@ -23,3 +23,6 @@ Thumbs.db
 # Full ATT&CK STIX bundles: large, rebuilt into a committed index (see data/attack/README.md)
 data/attack/enterprise-attack-*.json
 !data/attack/*.index.json
+
+# AI drafts from `ringtail run`: review, then move into rules/ deliberately
+drafts/

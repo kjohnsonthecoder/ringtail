@@ -17,6 +17,7 @@ dependencies = [
     "typer>=0.12",
     # Already installed by pySigma; declared because card.py imports it directly.
     "pyyaml>=6",
+    "anthropic>=2.10",
 ]
 
 [project.optional-dependencies]
@@ -29,7 +30,7 @@ ringtail = "ringtail.cli:app"
 where = ["core"]
 
 [tool.setuptools.package-data]
-ringtail = ["prompts/*"]
+ringtail = ["prompts/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

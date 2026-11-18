@@ -61,16 +61,25 @@ class CardNotes:
         if not path.is_file():
             raise CardNotesError(f"missing {path.as_posix()} (goal, summary, triage)")
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return cls.from_dict(data, where=path.as_posix())
+
+    @classmethod
+    def from_dict(cls, data: Any, where: str = "card", min_triage: int = 1) -> "CardNotes":
         if not isinstance(data, dict):
-            raise CardNotesError(f"{path.as_posix()} must be a mapping")
+            raise CardNotesError(f"{where} must be a mapping")
         goal, summary, triage = data.get("goal"), data.get("summary"), data.get("triage")
         if not isinstance(goal, str) or not goal.strip():
-            raise CardNotesError(f"{path.as_posix()}: 'goal' must be a non-empty string")
+            raise CardNotesError(f"{where}: 'goal' must be a non-empty string")
         if not isinstance(summary, str) or not summary.strip():
-            raise CardNotesError(f"{path.as_posix()}: 'summary' must be a non-empty string")
+            raise CardNotesError(f"{where}: 'summary' must be a non-empty string")
         if not isinstance(triage, list) or not triage or not all(isinstance(s, str) and s.strip() for s in triage):
-            raise CardNotesError(f"{path.as_posix()}: 'triage' must be a non-empty list of strings")
+            raise CardNotesError(f"{where}: 'triage' must be a non-empty list of strings")
+        if len(triage) < min_triage:
+            raise CardNotesError(f"{where}: 'triage' needs at least {min_triage} steps, got {len(triage)}")
         return cls(goal.strip(), summary.strip(), [s.strip() for s in triage])
+
+    def to_dict(self) -> dict:
+        return {"goal": self.goal, "summary": self.summary, "triage": list(self.triage)}
 
 
 # ---------------------------------------------------------------------------

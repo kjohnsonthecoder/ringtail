@@ -22,9 +22,28 @@ app = typer.Typer(
 EXIT_PASS, EXIT_FAIL, EXIT_USAGE = 0, 1, 2
 
 
-def _not_yet(name: str) -> None:
-    typer.echo(f"ringtail {name}: not implemented yet (v0.1 in progress).", err=True)
-    raise typer.Exit(EXIT_USAGE)
+def _read_input(text: Optional[str], file: Optional[Path]) -> str:
+    if (text is None) == (file is None):
+        typer.echo('Give exactly one input: "<behavior text>" or --file <report.txt>.', err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if file is not None:
+        try:
+            return file.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            typer.echo(f"Could not read {file}: {e}", err=True)
+            raise typer.Exit(EXIT_USAGE)
+    return text or ""
+
+
+def _make_llm():
+    """Build the real client, turning missing credentials into exit 2 with the BYOK message."""
+    from ringtail.llm import AnthropicLLM, LLMConfigError
+
+    try:
+        return AnthropicLLM()
+    except LLMConfigError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(EXIT_USAGE)
 
 
 @app.command()
@@ -146,15 +165,97 @@ def _resolve_rules(paths: List[Path]) -> List[Path]:
 
 
 @app.command()
-def draft(text: Optional[str] = typer.Argument(None), file: Optional[Path] = typer.Option(None, "--file")) -> None:
-    """AI draft only, prints YAML (coming next)."""
-    _not_yet("draft")
+def draft(
+    text: Optional[str] = typer.Argument(None, help="Plain-English behavior description."),
+    file: Optional[Path] = typer.Option(None, "--file", help="Read a threat report from a text or HTML file."),
+) -> None:
+    """AI draft only: print the Sigma YAML. No validation or tests (use `run` for that)."""
+    from ringtail.llm import LLMConfigError, LLMError
+    from ringtail.pipeline import draft_once
+    from ringtail.sanitize import InputError
+
+    raw = _read_input(text, file)
+    llm = _make_llm()
+    try:
+        _extraction, result, rule_text = draft_once(raw, llm)
+    except InputError as e:
+        typer.echo(f"Input problem: {e}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    except LLMConfigError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(EXIT_USAGE)
+    except LLMError as e:
+        typer.echo(f"Model call failed: {e}", err=True)
+        raise typer.Exit(EXIT_FAIL)
+    if rule_text is None:
+        typer.echo("The model's rule_yaml could not be parsed. Raw output follows.", err=True)
+        typer.echo(str(result.get("rule_yaml", "")))
+        raise typer.Exit(EXIT_FAIL)
+    typer.echo("# UNVERIFIED AI draft. Run `ringtail run` to validate and test it.", err=True)
+    typer.echo(rule_text, nl=False)
+    raise typer.Exit(EXIT_PASS)
 
 
 @app.command()
-def run(text: Optional[str] = typer.Argument(None), file: Optional[Path] = typer.Option(None, "--file")) -> None:
-    """Full draft, validate, test loop with retries (coming next)."""
-    _not_yet("run")
+def run(
+    text: Optional[str] = typer.Argument(None, help="Plain-English behavior description."),
+    file: Optional[Path] = typer.Option(None, "--file", help="Read a threat report from a text or HTML file."),
+    out: Path = typer.Option(Path("drafts"), "--out", help="Where to write the rule, samples, and card."),
+    force: bool = typer.Option(False, "--force", help="Overwrite an existing draft with the same name."),
+    as_json: bool = typer.Option(False, "--json", help="Print machine-readable results."),
+) -> None:
+    """Full loop: draft, validate, test, retry up to 3 times, then write rule + tests + card."""
+    from ringtail.llm import LLMConfigError
+    from ringtail.pipeline import run as run_pipeline
+    from ringtail.sanitize import InputError
+
+    raw = _read_input(text, file)
+    llm = _make_llm()
+    log = (lambda m: None) if as_json else (lambda m: typer.echo(m, err=True))
+    try:
+        result = run_pipeline(raw, llm, out, force=force, log=log)
+    except InputError as e:
+        typer.echo(f"Input problem: {e}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    except LLMConfigError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(EXIT_USAGE)
+    except AttackDataError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    usage = getattr(llm, "usage", [])
+    if as_json:
+        payload = result.to_dict()
+        payload["usage"] = usage
+        typer.echo(json.dumps(payload, indent=2))
+    elif result.passed:
+        c = result.candidate
+        tp_ok, tp_n = c.test_report.counts("true_positive")
+        fp_ok, fp_n = c.test_report.counts("false_positive")
+        typer.echo(f"\nPASS after {len(result.attempts)} attempt(s): TP {tp_ok}/{tp_n}, FP {fp_ok}/{fp_n}")
+        for p in result.written:
+            typer.echo(f"  wrote {p.as_posix()}")
+        if c.notes:
+            typer.echo(f"\nModel notes for the reviewer: {c.notes}")
+        typer.echo(
+            "\nThis is an AI draft. Review the rule, samples, and card; then move it into "
+            "rules/frontline-pack/ deliberately."
+        )
+    else:
+        typer.echo(f"\nFAIL: {result.error}")
+        for a in result.attempts:
+            typer.echo(f"  attempt {a.number}:")
+            for e in a.errors:
+                typer.echo(f"    - {e}")
+    if usage and not as_json:
+        tin = sum(u["input"] for u in usage)
+        tout = sum(u["output"] for u in usage)
+        typer.echo(f"\nTokens: {tin:,} in / {tout:,} out across {len(usage)} call(s).", err=True)
+
+    if result.error and result.error.endswith("(use --force to overwrite)"):
+        raise typer.Exit(EXIT_USAGE)
+    raise typer.Exit(EXIT_PASS if result.passed else EXIT_FAIL)
 
 
 if __name__ == "__main__":
