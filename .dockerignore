@@ -1,0 +1,11 @@
+.git
+.venv
+.env
+.env.*
+.claude
+drafts
+**/__pycache__
+**/*.egg-info
+.pytest_cache
+data/attack/enterprise-attack-*.json
+!data/attack/*.index.json
