@@ -1,0 +1,282 @@
+{
+  "source": {
+    "name": "OTRF Security-Datasets",
+    "repo": "https://github.com/OTRF/Security-Datasets",
+    "license": "MIT",
+    "commit": "d9d40ef123d2c87d5d3df28c96bcab4f0faccc87"
+  },
+  "datasets": [
+    {
+      "id": "psh_lsass_memory_dump_comsvcs",
+      "techniques": [
+        "T1003.001"
+      ],
+      "note": "PowerShell runs rundll32 comsvcs.dll MiniDump against LSASS",
+      "events": 184,
+      "process_events": 1
+    },
+    {
+      "id": "rdp_interactive_taskmanager_lsass_dump",
+      "techniques": [
+        "T1003.001"
+      ],
+      "note": "LSASS dumped from Task Manager over an RDP session",
+      "events": 5489,
+      "process_events": 17
+    },
+    {
+      "id": "cmd_lsass_memory_dumpert_syscalls",
+      "techniques": [
+        "T1003.001"
+      ],
+      "note": "Outflank Dumpert dumps LSASS with direct system calls",
+      "events": 118,
+      "process_events": 1
+    },
+    {
+      "id": "empire_mimikatz_logonpasswords",
+      "techniques": [
+        "T1003.001"
+      ],
+      "note": "Mimikatz sekurlsa::logonpasswords run in memory by an Empire agent",
+      "events": 6026,
+      "process_events": 1
+    },
+    {
+      "id": "cmd_dumping_ntds_dit_file_ntdsutil",
+      "techniques": [
+        "T1003.003"
+      ],
+      "note": "ntdsutil \"ifm create full\" copies NTDS.dit",
+      "events": 11184,
+      "process_events": 8
+    },
+    {
+      "id": "cmd_dumping_ntds_dit_file_volume_shadow_copy",
+      "techniques": [
+        "T1003.003"
+      ],
+      "note": "NTDS.dit copied out of a volume shadow copy",
+      "events": 16843,
+      "process_events": 15
+    },
+    {
+      "id": "empire_launcher_vbs",
+      "techniques": [
+        "T1059.005",
+        "T1059.001"
+      ],
+      "note": "a VBS launcher starts PowerShell with -enc (the Empire stager)",
+      "events": 2067,
+      "process_events": 5
+    },
+    {
+      "id": "cmd_mshta_vbscript_execute_psh",
+      "techniques": [
+        "T1218.005",
+        "T1059.005"
+      ],
+      "note": "mshta runs VBScript that starts PowerShell with a plain -command (no encoding)",
+      "events": 1127,
+      "process_events": 3
+    },
+    {
+      "id": "empire_schtasks_creation_standard_user",
+      "techniques": [
+        "T1053.005"
+      ],
+      "note": "schtasks /Create for persistence",
+      "events": 1297,
+      "process_events": 1
+    },
+    {
+      "id": "empire_wmic_add_user_backdoor",
+      "techniques": [
+        "T1047",
+        "T1136.001"
+      ],
+      "note": "remote WMIC process call create running \"net user /add\"",
+      "events": 12278,
+      "process_events": 25
+    },
+    {
+      "id": "empire_shell_net_local_users",
+      "techniques": [
+        "T1087.001"
+      ],
+      "note": "net user from an Empire shell",
+      "events": 1907,
+      "process_events": 5
+    },
+    {
+      "id": "cmd_seatbelt_group_user",
+      "techniques": [
+        "T1069.001"
+      ],
+      "note": "Seatbelt user and group enumeration",
+      "events": 451,
+      "process_events": 2
+    },
+    {
+      "id": "cmd_userinitmprlogonscript_batch",
+      "techniques": [
+        "T1037.001"
+      ],
+      "note": "logon script persistence via the UserInitMprLogonScript registry value",
+      "events": 122,
+      "process_events": 1
+    }
+  ],
+  "rules": [
+    {
+      "rule": "aws_cloudtrail_logging_disabled",
+      "title": "AWS CloudTrail Logging Stopped or Trail Deleted",
+      "techniques": [
+        "T1685.002"
+      ],
+      "detected": [],
+      "gaps": [],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 0,
+      "status": "samples"
+    },
+    {
+      "rule": "aws_console_login_without_mfa",
+      "title": "AWS Console Sign-In Without MFA",
+      "techniques": [
+        "T1078.004"
+      ],
+      "detected": [],
+      "gaps": [],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 0,
+      "status": "samples"
+    },
+    {
+      "rule": "win_proc_encoded_powershell",
+      "title": "PowerShell Launched With an Encoded Command",
+      "techniques": [
+        "T1059.001"
+      ],
+      "detected": [
+        {
+          "dataset": "empire_launcher_vbs",
+          "events": 1
+        }
+      ],
+      "gaps": [],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 85,
+      "status": "real"
+    },
+    {
+      "rule": "win_proc_lsass_dump_comsvcs",
+      "title": "LSASS Memory Dump With comsvcs.dll MiniDump",
+      "techniques": [
+        "T1003.001"
+      ],
+      "detected": [
+        {
+          "dataset": "psh_lsass_memory_dump_comsvcs",
+          "events": 1
+        }
+      ],
+      "gaps": [
+        {
+          "dataset": "rdp_interactive_taskmanager_lsass_dump",
+          "reason": "Task Manager writes the dump itself; no rundll32 or comsvcs.dll is involved",
+          "fired": false
+        },
+        {
+          "dataset": "cmd_lsass_memory_dumpert_syscalls",
+          "reason": "a custom binary using direct syscalls, not comsvcs.dll",
+          "fired": false
+        },
+        {
+          "dataset": "empire_mimikatz_logonpasswords",
+          "reason": "Mimikatz reads LSASS memory in-process; no dump command line exists",
+          "fired": false
+        }
+      ],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 85,
+      "status": "real"
+    },
+    {
+      "rule": "win_proc_nltest_domain_trust_discovery",
+      "title": "Nltest Domain Trust or Domain Controller Discovery",
+      "techniques": [
+        "T1482"
+      ],
+      "detected": [],
+      "gaps": [],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 85,
+      "status": "samples"
+    },
+    {
+      "rule": "win_proc_shadow_copy_deletion",
+      "title": "Volume Shadow Copies Deleted From the Command Line",
+      "techniques": [
+        "T1490"
+      ],
+      "detected": [],
+      "gaps": [],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 85,
+      "status": "samples"
+    },
+    {
+      "rule": "win_proc_wbadmin_ntds_backup",
+      "title": "Wbadmin Backup or Recovery Naming the NTDS Database",
+      "techniques": [
+        "T1003.003"
+      ],
+      "detected": [],
+      "gaps": [
+        {
+          "dataset": "cmd_dumping_ntds_dit_file_ntdsutil",
+          "reason": "uses ntdsutil IFM, not wbadmin",
+          "fired": false
+        },
+        {
+          "dataset": "cmd_dumping_ntds_dit_file_volume_shadow_copy",
+          "reason": "copies from a shadow copy, not wbadmin",
+          "fired": false
+        }
+      ],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 85,
+      "status": "samples"
+    },
+    {
+      "rule": "win_system_rustdesk_service_install",
+      "title": "RustDesk Installed as a Windows Service",
+      "techniques": [
+        "T1219.002",
+        "T1543.003"
+      ],
+      "detected": [],
+      "gaps": [],
+      "unexpected": [],
+      "regressions": [],
+      "events_scanned": 45,
+      "status": "samples"
+    }
+  ],
+  "totals": {
+    "datasets": 13,
+    "events": 59093,
+    "rules_proven_on_real_data": 2,
+    "gaps_documented": 5,
+    "unexpected": 0,
+    "regressions": 0
+  }
+}

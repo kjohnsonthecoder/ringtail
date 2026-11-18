@@ -29,3 +29,6 @@ drafts/
 
 # Local launcher config for the Claude desktop app's browser pane
 .claude/launch.json
+
+# Downloaded datasets for ringtail backtest (verified by SHA-256)
+.cache/

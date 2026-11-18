@@ -1,0 +1,108 @@
+# Real attack recordings for `ringtail backtest` (ADR 0006).
+#
+# Source: OTRF Security-Datasets (MIT), pinned to one commit; every file is checked against
+# its SHA-256 before use. `techniques` were verified by reading each recording's process
+# events, not taken from the file name.
+#
+# Expectations are reviewable human statements:
+#   fires: rules that must fire on this recording (CI fails if one goes quiet)
+#   gaps:  rules that cover this technique but not this method, and why (reported as gaps)
+# Any other rule that fires is reported as "unexpected" and needs review.
+
+source:
+  name: OTRF Security-Datasets
+  repo: https://github.com/OTRF/Security-Datasets
+  license: MIT
+  commit: d9d40ef123d2c87d5d3df28c96bcab4f0faccc87
+  base_url: https://raw.githubusercontent.com/OTRF/Security-Datasets/d9d40ef123d2c87d5d3df28c96bcab4f0faccc87/datasets/atomic/windows
+
+datasets:
+  - id: psh_lsass_memory_dump_comsvcs
+    path: credential_access/host/psh_lsass_memory_dump_comsvcs.zip
+    sha256: 0af9e920220d746432f0972be83ad057629695540aecd68c15869d190786e1ae
+    techniques: [T1003.001]
+    note: PowerShell runs rundll32 comsvcs.dll MiniDump against LSASS
+    fires: [win_proc_lsass_dump_comsvcs]
+
+  - id: rdp_interactive_taskmanager_lsass_dump
+    path: credential_access/host/rdp_interactive_taskmanager_lsass_dump.zip
+    sha256: a7761e64c891162e949afebf367084a6dddd2f3dac7b91bce870fcf9f6206fba
+    techniques: [T1003.001]
+    note: LSASS dumped from Task Manager over an RDP session
+    gaps:
+      win_proc_lsass_dump_comsvcs: Task Manager writes the dump itself; no rundll32 or comsvcs.dll is involved
+
+  - id: cmd_lsass_memory_dumpert_syscalls
+    path: credential_access/host/cmd_lsass_memory_dumpert_syscalls.zip
+    sha256: a28dbf708685a80edfb0b3d2a00c9bf196dd394fc1d61a933878841f4872a7ed
+    techniques: [T1003.001]
+    note: Outflank Dumpert dumps LSASS with direct system calls
+    gaps:
+      win_proc_lsass_dump_comsvcs: a custom binary using direct syscalls, not comsvcs.dll
+
+  - id: empire_mimikatz_logonpasswords
+    path: credential_access/host/empire_mimikatz_logonpasswords.zip
+    sha256: bb4c057b62d781be5426e011872ba1a15070c07afbb24848a14458f4b22b06fb
+    techniques: [T1003.001]
+    note: Mimikatz sekurlsa::logonpasswords run in memory by an Empire agent
+    gaps:
+      win_proc_lsass_dump_comsvcs: Mimikatz reads LSASS memory in-process; no dump command line exists
+
+  - id: cmd_dumping_ntds_dit_file_ntdsutil
+    path: credential_access/host/cmd_dumping_ntds_dit_file_ntdsutil.zip
+    sha256: 4633882ab1e9eadd156b29a89a5a6e24b680ead1b11ee259fdbe0d19ddbf77cf
+    techniques: [T1003.003]
+    note: ntdsutil "ifm create full" copies NTDS.dit
+    gaps:
+      win_proc_wbadmin_ntds_backup: uses ntdsutil IFM, not wbadmin
+
+  - id: cmd_dumping_ntds_dit_file_volume_shadow_copy
+    path: credential_access/host/cmd_dumping_ntds_dit_file_volume_shadow_copy.zip
+    sha256: aed847c1571ec3ef906f2b844d343bb3897eec4cf856b8f0939e934646348378
+    techniques: [T1003.003]
+    note: NTDS.dit copied out of a volume shadow copy
+    gaps:
+      win_proc_wbadmin_ntds_backup: copies from a shadow copy, not wbadmin
+
+  - id: empire_launcher_vbs
+    path: execution/host/empire_launcher_vbs.zip
+    sha256: 812da270cf8cda6f1948fb6275410f15dc1794d0bd6b623c9c25b2518285019c
+    techniques: [T1059.005, T1059.001]
+    note: a VBS launcher starts PowerShell with -enc (the Empire stager)
+    fires: [win_proc_encoded_powershell]
+
+  - id: cmd_mshta_vbscript_execute_psh
+    path: defense_evasion/host/cmd_mshta_vbscript_execute_psh.zip
+    sha256: f5f700bc986bbe73edcc209754b28a3e0ad38c56877f7fc5ed6fd04bc036d9f4
+    techniques: [T1218.005, T1059.005]
+    note: mshta runs VBScript that starts PowerShell with a plain -command (no encoding)
+
+  - id: empire_schtasks_creation_standard_user
+    path: persistence/host/empire_schtasks_creation_standard_user.zip
+    sha256: b073a18420c90394cd2b6ad7589c78d90eba32dc155ed04b12ac824a8fc591b4
+    techniques: [T1053.005]
+    note: schtasks /Create for persistence
+
+  - id: empire_wmic_add_user_backdoor
+    path: defense_evasion/host/empire_wmic_add_user_backdoor.zip
+    sha256: 4b18e693ed39cc75c429bc6f4b02400eda7dd01f336303e3edaf3cc3262bbac4
+    techniques: [T1047, T1136.001]
+    note: remote WMIC process call create running "net user /add"
+
+  - id: empire_shell_net_local_users
+    path: discovery/host/empire_shell_net_local_users.zip
+    sha256: a2cf8016ad2a134f61aec5133bd0aa54f662aa4165f60b30f4204fd31787576c
+    techniques: [T1087.001]
+    note: net user from an Empire shell
+
+  - id: cmd_seatbelt_group_user
+    path: discovery/host/cmd_seatbelt_group_user.zip
+    sha256: d885d5c331641d24594869c62eaae563d1ff0c18a2d3c2ba71f48b10e663b1bc
+    techniques: [T1069.001]
+    note: Seatbelt user and group enumeration
+
+  - id: cmd_userinitmprlogonscript_batch
+    path: persistence/host/cmd_userinitmprlogonscript_batch.zip
+    sha256: 53a01d6976b7567a2464628d850c51cc48b1a91a932cd2b0e110a510bcedf858
+    techniques: [T1037.001]
+    note: logon script persistence via the UserInitMprLogonScript registry value
