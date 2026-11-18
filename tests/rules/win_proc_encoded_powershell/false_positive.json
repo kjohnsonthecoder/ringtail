@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "Routine admin PowerShell running a script file. No encoding.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "OriginalFileName": "PowerShell.EXE",
+    "CommandLine": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Scripts\\nightly-backup.ps1",
+    "ParentImage": "C:\\Windows\\System32\\svchost.exe"
+  },
+  {
+    "_comment": "Interactive admin command. -ExecutionPolicy starts with -e but is not an encoding flag.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "OriginalFileName": "pwsh.dll",
+    "CommandLine": "pwsh.exe -ExecutionPolicy RemoteSigned -Command \"Get-Service -Name Spooler | Restart-Service\"",
+    "ParentImage": "C:\\Windows\\explorer.exe"
+  },
+  {
+    "_comment": "Not PowerShell: openssl uses -e for encrypt. Proves the image selection is required.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-02.example.local",
+    "User": "EXAMPLE\\dev-placeholder",
+    "Image": "C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe",
+    "OriginalFileName": "openssl.exe",
+    "CommandLine": "openssl.exe enc -aes-256-cbc -e -in notes.txt -out notes.enc",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  }
+]

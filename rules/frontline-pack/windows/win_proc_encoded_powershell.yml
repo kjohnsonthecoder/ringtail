@@ -1,0 +1,39 @@
+title: PowerShell Launched With an Encoded Command
+id: d46fb37c-e191-40be-afc1-00a1815513e7
+status: experimental
+description: |
+  Detects powershell.exe or pwsh.exe started with -EncodedCommand or one of its accepted
+  abbreviations (-e, -en, -enc, -enco..., -ec). Attackers base64-encode scripts to hide them
+  from casual review and simple command-line string matching.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+  - https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe
+author: Kevin Johnson (Ringtail Frontline Pack)
+date: 2026-11-17
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith:
+        - '\powershell.exe'
+        - '\pwsh.exe'
+    - OriginalFileName:
+        - 'PowerShell.EXE'
+        - 'pwsh.dll'
+  selection_enc:
+    # windash also matches /enc and Unicode dash look-alikes used to dodge string matching.
+    CommandLine|contains|windash:
+      - ' -e '
+      - ' -en '
+      - ' -enc '
+      - ' -enco'
+      - ' -ec '
+  condition: all of selection_*
+falsepositives:
+  - Management and deployment tools (SCCM, Intune, some RMM agents) that legitimately pass encoded commands
+  - Admin scripts that build PowerShell command lines with -EncodedCommand to avoid quoting issues
+level: medium

