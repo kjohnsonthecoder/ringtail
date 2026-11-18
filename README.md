@@ -28,7 +28,9 @@ Ringtail handles prompt injection, your API key, and model output.
 
 ## Quickstart
 
-Requires Python 3.11 to 3.13 (pySigma doesn't support 3.15 yet).
+Requires Python 3.11 to 3.13 (pySigma doesn't support 3.15 yet). On Windows, clone to a
+short path (for example `C:\src\ringtail`): the Anthropic SDK has long file names that can
+hit Windows' 260-character path limit in deep folders.
 
 ```bash
 git clone https://github.com/kjohnsonthecoder/ringtail.git
