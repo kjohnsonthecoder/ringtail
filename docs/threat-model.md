@@ -115,7 +115,8 @@ calls Claude and never sees a key: the browser calls Claude directly with the us
 | Flooding `/api/check` (CPU-bound pySigma + matcher) | Per-IP limit, 30 POSTs per minute; checks run in a worker thread, off the event loop. | `RateLimiter`, `create_app` |
 | Leaking internals | Unexpected errors return a bare `internal error`. No interactive docs. Access logs record paths, not bodies or headers. | `create_app` |
 | Cross-site use of the API | No CORS headers at all: the page is served from the same origin, so other sites' pages can't read responses. | `create_app` |
-| Script injection into the page (which holds the key) | Strict CSP: scripts and styles from `'self'` only, network only to `'self'` and `api.anthropic.com`, no framing. The page will render model output as text, never HTML. | `SECURITY_HEADERS` |
+| Script injection into the page (which holds the key) | Strict CSP: scripts and styles from `'self'` only, network only to `'self'` and `api.anthropic.com`, no framing. The page inserts model output with `textContent` only, and card notes are HTML-escaped outside code spans, so a downloaded card can't carry raw HTML either. | `SECURITY_HEADERS` |
+| Key persistence in the browser | The key lives only in the password field: no `localStorage`, cookies, or session storage. Gone on reload; "Forget key" clears it. Calls use `credentials: "omit"` and `no-referrer`. | `web/app.js` |
 | The browser skips the checks and shows an unchecked draft | Accepted: it only fools the user running it. A rule is trusted only once committed and green in CI, which reruns every check. | ADR 0003 |
 
 Limits of the current controls: the rate limiter is in memory, per process, and resets on

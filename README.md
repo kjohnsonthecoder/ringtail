@@ -8,8 +8,8 @@ Ringtail turns a plain-English behavior description or a threat report into a
 [Sigma](https://sigmahq.io) detection rule, maps it to MITRE ATT&CK, and **proves** the rule
 works by replaying sample logs: it must fire on the attack and stay quiet on benign activity.
 
-> Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 in progress: the web backend is built
-> ([backend/](backend/README.md)); the BYOK web page is next.
+> Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 in progress: the BYOK web page and its
+> backend run locally ([web/](web/README.md), [backend/](backend/README.md)); hosting is next.
 
 ## Pipeline
 
@@ -70,6 +70,17 @@ Review it, then move it into `rules/frontline-pack/` on purpose.
 
 Exit code 2 means a usage or config problem, such as a missing `ANTHROPIC_API_KEY`.
 The default model is `claude-opus-5-5`; set `RINGTAIL_MODEL` to change it.
+
+## Web page (local)
+
+The same loop in a browser. Your key stays in the tab and goes only to Anthropic; the
+Ringtail server builds prompts and runs the checks, and never sees it
+([ADR 0003](docs/decisions/0003-browser-byok-architecture.md)).
+
+```bash
+pip install -e ".[web]"
+uvicorn backend.app:app       # open http://127.0.0.1:8000
+```
 
 ## Frontline Pack
 

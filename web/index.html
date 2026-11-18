@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Ringtail</title>
+  <meta name="description" content="Plain English in, Sigma rules that must fire out. Drafted by Claude, proven by replaying sample logs.">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <h1>Ringtail</h1>
+      <p class="tagline">Plain English in, rules that must fire out.</p>
+      <p class="sub">Describe a behavior or paste a threat report. Claude drafts a Sigma rule with
+        test samples; Ringtail's code validates it against pinned MITRE ATT&amp;CK
+        <span id="attack-version">v20.1</span> and replays the samples. It must fire on the attack
+        and stay quiet on benign activity, or it goes back for another try.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel" aria-labelledby="key-h">
+      <h2 id="key-h">1. Your Anthropic API key</h2>
+      <div class="row">
+        <label class="field grow">
+          <span class="label">API key</span>
+          <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-..." aria-describedby="key-note key-problem">
+        </label>
+        <label class="field">
+          <span class="label">Model</span>
+          <input id="model" type="text" autocomplete="off" spellcheck="false" value="claude-opus-5-5">
+        </label>
+        <button id="forget" type="button" class="secondary">Forget key</button>
+      </div>
+      <p id="key-problem" class="problem" role="alert" hidden></p>
+      <p id="key-note" class="note">Bring your own key. It stays in this tab's memory and is sent only to
+        <code>api.anthropic.com</code>, never to the Ringtail server. It's gone when you close or reload
+        the tab. <a href="https://github.com/kjohnsonthecoder/ringtail/blob/main/docs/decisions/0003-browser-byok-architecture.md" rel="noopener noreferrer" target="_blank">How this works</a></p>
+    </section>
+
+    <section class="panel" aria-labelledby="input-h">
+      <h2 id="input-h">2. What should it detect?</h2>
+      <label class="field">
+        <span class="label">Behavior description or threat report (plain text or pasted HTML)</span>
+        <textarea id="input" rows="7" spellcheck="true" placeholder="e.g. detect encoded powershell"></textarea>
+      </label>
+      <div class="row examples">
+        <span class="label">Try:</span>
+        <button type="button" class="chip" data-example="detect encoded powershell">Encoded PowerShell</button>
+        <button type="button" class="chip" data-example="Detect when someone stops CloudTrail logging or deletes a trail in AWS">CloudTrail logging stopped</button>
+        <button type="button" class="chip" data-example="Detect certutil being used to download a file from a URL">Certutil download</button>
+      </div>
+      <div class="row actions">
+        <button id="run" type="button" class="primary">Draft and prove a rule</button>
+        <button id="stop" type="button" class="secondary" hidden>Stop</button>
+        <span id="chars" class="note"></span>
+      </div>
+      <p class="note">The text is treated as untrusted data: Ringtail strips it to plain text and wraps it
+        so instructions hidden inside a report can't steer the model.</p>
+    </section>
+
+    <section id="progress-panel" class="panel" aria-labelledby="progress-h" hidden>
+      <h2 id="progress-h">3. Progress</h2>
+      <ol id="log" class="log" aria-live="polite"></ol>
+      <p id="usage" class="note"></p>
+    </section>
+
+    <section id="result-panel" class="panel" aria-labelledby="result-h" hidden>
+      <div class="result-head">
+        <h2 id="result-h">4. Proven rule</h2>
+        <span id="verdict" class="badge pass">PASS</span>
+      </div>
+      <p id="summary" class="summary"></p>
+      <div class="tabs" role="tablist" aria-label="Rule outputs">
+        <button type="button" role="tab" id="tab-rule" aria-controls="pane-rule" aria-selected="true">Sigma rule</button>
+        <button type="button" role="tab" id="tab-card" aria-controls="pane-card" aria-selected="false" tabindex="-1">Detection card</button>
+        <button type="button" role="tab" id="tab-tp" aria-controls="pane-tp" aria-selected="false" tabindex="-1">Should fire</button>
+        <button type="button" role="tab" id="tab-fp" aria-controls="pane-fp" aria-selected="false" tabindex="-1">Should not fire</button>
+      </div>
+      <div id="pane-rule" role="tabpanel" aria-labelledby="tab-rule" class="pane"><pre id="out-rule"></pre></div>
+      <div id="pane-card" role="tabpanel" aria-labelledby="tab-card" class="pane" hidden><pre id="out-card"></pre></div>
+      <div id="pane-tp" role="tabpanel" aria-labelledby="tab-tp" class="pane" hidden><pre id="out-tp"></pre></div>
+      <div id="pane-fp" role="tabpanel" aria-labelledby="tab-fp" class="pane" hidden><pre id="out-fp"></pre></div>
+      <div class="row downloads">
+        <span class="label">Download:</span>
+        <button type="button" class="secondary" data-download="rule">rule .yml</button>
+        <button type="button" class="secondary" data-download="tp">true_positive.json</button>
+        <button type="button" class="secondary" data-download="fp">false_positive.json</button>
+        <button type="button" class="secondary" data-download="notes">card notes .yml</button>
+        <button type="button" class="secondary" data-download="card">card .md</button>
+      </div>
+      <p class="note">This is an AI draft that passed Ringtail's checks, not a reviewed rule. Read it, then
+        add it to a repo as <code>rules/&lt;dir&gt;/&lt;slug&gt;.yml</code>,
+        <code>tests/rules/&lt;slug&gt;/</code>, and <code>cards/&lt;slug&gt;.yml</code> (the
+        <code>.card.yml</code> download), and let
+        <code>ringtail validate</code> and <code>ringtail test</code> confirm it in CI.</p>
+    </section>
+  </main>
+
+  <footer class="wrap site">
+    <p>Ringtail is open source (MIT). Code, threat model and design decisions:
+      <a href="https://github.com/kjohnsonthecoder/ringtail" rel="noopener noreferrer" target="_blank">github.com/kjohnsonthecoder/ringtail</a>.
+      Built-in rules: the Frontline Pack.</p>
+  </footer>
+</body>
+</html>
