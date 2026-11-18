@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.3.0 (2026-11-18)
+
+The **Highlight to Detect** browser extension for Chrome and Edge.
+
+### Browser extension
+- Highlight attacker behavior on any page, right-click **Detect with Ringtail**, and the side
+  panel drafts, validates, and tests a rule, with Splunk and KQL queries and downloads.
+- Small permissions by design ([ADR 0005](docs/decisions/0005-browser-extension.md)):
+  `contextMenus`, `sidePanel`, `storage`, plus Anthropic and the Ringtail server. No content
+  scripts, so it can't read the pages you visit; it only receives the text you highlight.
+- Your key and access code live in `chrome.storage.session` only (memory, cleared when the
+  browser quits). A self-hosted server is optional and gets permission for exactly its own
+  address, requested at that moment.
+- Install: load unpacked from the zip attached to this release (or the `extension/` folder in
+  the source code). Chrome Web Store listing pending review.
+
+### Shared code and tests
+- The browser loop now lives in shared modules used by the web page and the extension
+  (`web/ringtail-client.js`, `web/ringtail-ui.js`), with unit tests on Node's built-in runner.
+- CI enforces the extension's guardrails: the exact permission set, no page access, secrets
+  only in session storage, no remote code, and the extension's copies matching `web/`.
+
+### Also
+- KQL conversion now covers Linux process-creation rules (Defender `DeviceProcessEvents`),
+  added after the first real extension run produced a Linux rule.
+- Privacy policy page: <https://web-production-34d65045.up.railway.app/privacy.html>.
+- Threat model section T7 covers the extension.
+
 ## v0.2.0 (2026-11-18)
 
 Ringtail is now a web app as well as a CLI, the Frontline Pack has eight rules, and every

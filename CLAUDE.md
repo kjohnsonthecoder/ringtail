@@ -11,7 +11,7 @@ This is a portfolio project for SOC / detection engineering / IR roles, not a pr
 Origin nod: the built-in rule set is called the **Frontline Pack** (Kevin's company,
 Frontline Consultant, is where this started).
 
-Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.2.0.
+Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.3.0.
 
 ---
 
@@ -38,7 +38,7 @@ Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.2.0
 | v0.1 | `core/` library, `ringtail` CLI, first Frontline Pack rules, CI, README | Done |
 | v0.2 | BYOK web page, stateless FastAPI backend, Railway deploy | Done, released as v0.2.0 |
 | v0.2.0 extras | Frontline Pack grown to 8 rules; Splunk SPL + Microsoft KQL conversion | Done |
-| v0.3 | Browser extension "Highlight to Detect" | **Next** (plan below) |
+| v0.3 | Browser extension "Highlight to Detect" | Built and released as v0.3.0; Chrome Web Store submission is Kevin's |
 | Later | Replay public datasets (OTRF, EVTX-ATTACK-SAMPLES); RSigma as a second CI engine | Not started |
 
 Design decisions live in `docs/decisions/` (ADRs 0001–0004). Read the relevant ADR before
@@ -87,7 +87,7 @@ ringtail/
 ├── backend/app.py               # FastAPI: /api/prompt, /api/check, /api/health; no key ever
 ├── web/                         # static BYOK page; ringtail-client.js + ringtail-ui.js are shared with the extension
 ├── extension/                   # v0.3 MV3 extension: manifest, background.js, sidepanel/, lib/ (synced copies), icons/
-├── scripts/                     # sync_extension.py (web → extension/lib), make_icons.py
+├── scripts/                     # sync_extension.py, make_icons.py, make_store_images.py, package_extension.py
 ├── data/attack/                 # pinned ATT&CK v20.1 index (+ version note, SHA-256)
 ├── rules/frontline-pack/{windows,cloudtrail}/<rule>.yml
 ├── tests/rules/<rule-id>/{true_positive,false_positive}.json
@@ -190,11 +190,11 @@ Decisions (Kevin, 2026-11-18; record in ADR 0005 before building):
 
 Definition of done for v0.3:
 - [x] ADR 0005 and threat-model T7 written before code
-- [ ] Highlight → right-click → side panel produces a proven rule against the live backend
-- [ ] Key never reaches the Ringtail backend; extension requests no page access
+- [x] Highlight → right-click → side panel produces a proven rule against the live backend (Kevin, real Chrome, NGINX advisory → Linux rule)
+- [x] Key never reaches the Ringtail backend; extension requests no page access
 - [x] Shared client module used by web and extension; CI checks the copies match
 - [x] `node --test` unit tests for the shared loop in CI
-- [ ] Privacy policy published; store listing, icons, and screenshots ready
+- [x] Privacy policy published; store listing, icons, and screenshots ready (`docs/store/`)
 - [ ] Extension zip attached to a GitHub release; README section with a screenshot
 - [ ] Submitted to the Chrome Web Store (Kevin submits; review time is Google's)
 

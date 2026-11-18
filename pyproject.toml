@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ringtail"
-version = "0.2.0"
+version = "0.3.0"
 description = "Plain English in, rules that must fire out: Sigma rules drafted by AI, proven by tests."
 readme = "README.md"
 license = { text = "MIT" }

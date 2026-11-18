@@ -13,8 +13,8 @@ API key; it stays in your browser tab and goes only to Anthropic).
 
 ![A real run on the web page: PowerShell encoded-command rule drafted, then proven on 4/4 attack and 5/5 benign samples](docs/images/web-run-encoded-powershell.png)
 
-> Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 done: the BYOK web page and its
-> stateless backend ([web/](web/README.md), [backend/](backend/README.md)), hosted on Railway.
+> Status: v0.3. CLI, BYOK web page, and the **Highlight to Detect** browser extension
+> ([web/](web/README.md), [backend/](backend/README.md), [extension/](extension/README.md)).
 > Every rule also converts to Splunk SPL and Microsoft KQL.
 
 ## Pipeline
@@ -89,6 +89,16 @@ pip install -e ".[web]"
 uvicorn backend.app:app       # open http://127.0.0.1:8000
 ```
 
+## Browser extension: Highlight to Detect
+
+Highlight attacker behavior in any threat report, right-click **Detect with Ringtail**, and
+the side panel drafts and proves a rule, with Splunk and KQL queries. It can't read the
+pages you visit: it only gets the text you highlight and choose to send. Your key stays in
+browser session memory and goes only to Anthropic
+([ADR 0005](docs/decisions/0005-browser-extension.md), [install](extension/README.md)).
+
+![The extension side panel after a real run: an NGINX HTTP/2 advisory became a Linux rule (nginx spawning a shell or recon tool) on the first attempt](docs/images/extension-run-nginx.png)
+
 ## Frontline Pack
 
 Eight rules covering an intrusion from first discovery to ransomware, plus two cloud
@@ -133,6 +143,7 @@ Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_posi
 - [ADR 0002: Pinned ATT&CK index](docs/decisions/0002-pinned-attack-index.md)
 - [ADR 0003: Browser BYOK architecture](docs/decisions/0003-browser-byok-architecture.md)
 - [ADR 0004: SIEM query conversion](docs/decisions/0004-siem-conversion.md)
+- [ADR 0005: Browser extension](docs/decisions/0005-browser-extension.md)
 
 ## License
 
