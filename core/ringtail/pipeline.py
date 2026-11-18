@@ -40,6 +40,7 @@ AUTHOR = "Ringtail draft (AI-generated; review before use)"
 SLUG_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 MIN_SAMPLES = 2
 MIN_TRIAGE = 3
+CARD_NOTES_HEADER = "# AI-drafted card notes. Review and edit, then regenerate the card with: ringtail card <rule>\n"
 
 _STR = {"type": "string"}
 _STR_LIST = {"type": "array", "items": _STR}
@@ -389,8 +390,7 @@ def write_candidate(c: Candidate, out_dir: Path, force: bool = False) -> list[Pa
     dump(paths["rule"], c.rule_text)
     dump(paths["tp"], json.dumps(c.true_positives, indent=2, ensure_ascii=False) + "\n")
     dump(paths["fp"], json.dumps(c.false_positives, indent=2, ensure_ascii=False) + "\n")
-    header = "# AI-drafted card notes. Review and edit, then regenerate the card with: ringtail card <rule>\n"
-    dump(paths["notes"], header + yaml.safe_dump(c.card.to_dict(), sort_keys=False, allow_unicode=True, width=100))
+    dump(paths["notes"], CARD_NOTES_HEADER + yaml.safe_dump(c.card.to_dict(), sort_keys=False, allow_unicode=True, width=100))
     card_path, card_text, _ = build_card(paths["rule"], out_dir / "cards")
     dump(card_path, card_text)
     return list(paths.values())

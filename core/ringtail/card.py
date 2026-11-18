@@ -13,6 +13,7 @@ Output is deterministic (no timestamps) so CI can fail when a committed card is 
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -175,6 +176,17 @@ def _esc(s: str) -> str:
     return s.replace("|", "\\|").replace("<", "&lt;").replace(">", "&gt;").replace("\n", " ")
 
 
+_CODE_SPAN = re.compile(r"(`[^`\n]*`)")
+
+
+def _esc_prose(s: str) -> str:
+    """Escape < and > outside `code spans` so card notes (which may be AI-written) can't
+    inject raw HTML into the rendered Markdown. Code spans are left alone: Markdown never
+    treats their contents as HTML, and escaping there would show up literally."""
+    parts = _CODE_SPAN.split(s)
+    return "".join(p if i % 2 else p.replace("<", "&lt;").replace(">", "&gt;") for i, p in enumerate(parts))
+
+
 def _test_lines(report: RuleReport) -> list[str]:
     tp_ok, tp_n = report.counts("true_positive")
     fp_ok, fp_n = report.counts("false_positive")
@@ -218,7 +230,7 @@ def render_card_text(text: str, stem: str, notes: CardNotes, report: RuleReport)
         "",
         "## Goal",
         "",
-        notes.goal,
+        _esc_prose(notes.goal),
         "",
         "## ATT&CK",
         "",
@@ -230,7 +242,7 @@ def render_card_text(text: str, stem: str, notes: CardNotes, report: RuleReport)
         "",
         "## Detection logic",
         "",
-        notes.summary,
+        _esc_prose(notes.summary),
         "",
         "Exact logic, generated from the rule:",
         "",
@@ -242,7 +254,7 @@ def render_card_text(text: str, stem: str, notes: CardNotes, report: RuleReport)
         "",
         "## Triage steps",
         "",
-        *[f"{i}. {step}" for i, step in enumerate(notes.triage, 1)],
+        *[f"{i}. {_esc_prose(step)}" for i, step in enumerate(notes.triage, 1)],
         "",
         "## Test results",
         "",

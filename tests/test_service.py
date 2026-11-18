@@ -45,7 +45,7 @@ def test_extract_refuses_an_api_key_in_the_input():
     ({"stage": "draft", "extraction": EXTRACTION, "attempt": 0}, "'attempt'"),
     ({"stage": "draft", "extraction": EXTRACTION, "attempt": 4}, "'attempt'"),
     ({"stage": "draft", "extraction": EXTRACTION, "attempt": True}, "'attempt'"),
-    ({"stage": "draft", "extraction": EXTRACTION, "attempt": 2}, "needs the failed draft"),
+    ({"stage": "draft", "extraction": EXTRACTION, "attempt": 2, "previous": "yaml"}, "failed draft object"),
     ({"stage": "draft", "extraction": EXTRACTION, "attempt": 1, "previous": {}}, "only allowed"),
 ])
 def test_bad_prompt_requests_are_refused(req, needle):
@@ -88,6 +88,13 @@ def test_check_passes_good_draft_and_renders_card():
     assert "tests/rules/win_proc_certutil_download/" in r["card_markdown"]
     assert "**PASS**" in r["card_markdown"]
     assert len(r["card_notes"]["triage"]) == 3
+    assert r["card_notes_yaml"].startswith("# AI-drafted card notes")
+    assert "Hash the downloaded file." in r["card_notes_yaml"]
+
+
+def test_retry_without_previous_is_a_fresh_draft():
+    p = service.build_prompt({"stage": "draft", "extraction": EXTRACTION, "attempt": 2})
+    assert p["purpose"] == "draft attempt 2"
 
 
 def test_check_reports_exact_errors():
@@ -102,3 +109,13 @@ def test_check_reports_exact_errors():
 def test_check_needs_a_draft_object(req):
     with pytest.raises(ServiceError):
         service.check(req)
+
+
+def test_card_escapes_html_from_model_notes_but_not_code_spans():
+    d = draft(card={"goal": "<img src=x onerror=alert(1)> catch it",
+                    "summary": "Fires on `<trail>` names.",
+                    "triage": ["a", "b", "<script>c</script>"]})
+    md = service.check({"draft": d}, today=TODAY)["result"]["card_markdown"]
+    assert "<img" not in md and "<script>" not in md
+    assert "&lt;img src=x onerror=alert(1)&gt; catch it" in md
+    assert "`<trail>`" in md
