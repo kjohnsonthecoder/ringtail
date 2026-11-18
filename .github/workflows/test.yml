@@ -34,3 +34,21 @@ jobs:
         run: ringtail convert rules/ > /dev/null
       - name: Shared browser loop (node --test, no npm packages)
         run: node --test tests/js/client.test.mjs
+      - name: Cache real attack recordings (pinned by commit and SHA-256)
+        uses: actions/cache@v4
+        with:
+          path: .cache/datasets
+          key: otrf-${{ hashFiles('data/datasets/otrf.yml') }}
+      - name: Real-data backtest is up to date (OTRF recordings)
+        run: ringtail backtest --check
+      - name: ATT&CK kill-chain coverage image is up to date
+        run: ringtail coverage --check
+      - name: Install RSigma v0.27.0 (pinned, SHA-256 checked)
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/rsigma.tar.gz" https://github.com/timescale/rsigma/releases/download/v0.27.0/rsigma-x86_64-unknown-linux-gnu.tar.gz
+          echo "2da1432dd71d9ac9080ccbf046532850331cb672f85d394e340ec18ab1d5d44b  $RUNNER_TEMP/rsigma.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/rsigma"
+          tar xzf "$RUNNER_TEMP/rsigma.tar.gz" -C "$RUNNER_TEMP/rsigma" ./rsigma
+          echo "$RUNNER_TEMP/rsigma" >> "$GITHUB_PATH"
+      - name: Second engine agrees (RSigma vs Ringtail matcher)
+        run: ringtail crosscheck --require

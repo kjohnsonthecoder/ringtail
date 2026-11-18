@@ -104,6 +104,9 @@ button.chip { padding: 4px 10px; border-radius: 999px; font-size: 0.9rem; }
 .examples { margin-top: 10px; align-items: center; }
 .access { margin-top: 12px; }
 
+.coverage-scroll { overflow-x: auto; margin-top: 12px; border-radius: 10px; }
+.coverage-scroll img { display: block; max-width: none; height: auto; }
+
 .query { margin-bottom: 16px; }
 .query-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .query .note { margin: 4px 0 8px; }

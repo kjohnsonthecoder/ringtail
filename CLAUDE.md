@@ -39,7 +39,7 @@ Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.3.0
 | v0.2 | BYOK web page, stateless FastAPI backend, Railway deploy | Done, released as v0.2.0 |
 | v0.2.0 extras | Frontline Pack grown to 8 rules; Splunk SPL + Microsoft KQL conversion | Done |
 | v0.3 | Browser extension "Highlight to Detect" | Built and released as v0.3.0; Chrome Web Store submission is Kevin's |
-| Later | Replay public datasets (OTRF, EVTX-ATTACK-SAMPLES); RSigma as a second CI engine | Not started |
+| v0.4 | Real-data backtest (OTRF, pinned), RSigma cross-check in CI, ATT&CK kill-chain coverage visual | Built (ADR 0006) |
 
 Design decisions live in `docs/decisions/` (ADRs 0001–0004). Read the relevant ADR before
 changing that area; write a new ADR for any new architectural choice.
@@ -124,6 +124,9 @@ ringtail validate <rules>                               # pySigma + ATT&CK check
 ringtail test <rules>                                   # replay TP/FP events
 ringtail card <rules> [--check]                         # generate cards / check freshness
 ringtail convert <rules> [-t splunk|kql]                # SIEM queries
+ringtail backtest [--check] [--offline]                 # replay pinned OTRF recordings
+ringtail crosscheck [--rsigma PATH] [--require]         # compare with RSigma
+ringtail coverage [--check]                             # ATT&CK kill-chain SVG
 ```
 
 Exit codes: 0 = pass, 1 = validation/test failure, 2 = usage/config error
@@ -158,7 +161,9 @@ Known false positives · Triage steps · Test results (TP/FP pass) · References
 
 `.github/workflows/test.yml` on push and pull_request: install → `pytest` →
 `ringtail validate rules/` → `ringtail test rules/` → `ringtail card rules/ --check` →
-`ringtail convert rules/`. No API key in CI: it never calls the LLM.
+`ringtail convert rules/` → `node --test` → `ringtail backtest --check` → `ringtail coverage --check`
+→ pinned RSigma install → `ringtail crosscheck --require`. No API key in CI: it never calls the LLM.
+When rules change, regenerate: `ringtail card rules/`, `ringtail backtest`, `ringtail coverage`.
 
 ---
 

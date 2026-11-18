@@ -72,6 +72,9 @@ Review it, then move it into `rules/frontline-pack/` on purpose.
 | `ringtail test <rules>` | Replay TP/FP samples | 0 pass, 1 fail |
 | `ringtail card <rules> [--check]` | Generate detection cards, or check they're fresh | 0 pass, 1 fail/stale |
 | `ringtail convert <rules> [-t splunk\|kql]` | Splunk SPL and Microsoft Sentinel / Defender KQL queries | 0 ok, 1 not convertible |
+| `ringtail backtest [--check]` | Replay pinned real attack recordings (OTRF) against every rule | 0 pass, 1 regression/unexpected/stale |
+| `ringtail crosscheck` | Compare verdicts with RSigma, an independent Sigma engine | 0 agree, 1 disagree |
+| `ringtail coverage [--check]` | Draw the rules on the ATT&CK tactic line (SVG) | 0 pass, 1 stale |
 | `ringtail draft "<text>"` | AI draft only, prints YAML | 0 ok, 1 model error |
 | `ringtail run "<text>"` | Full loop, writes to `drafts/` | 0 pass, 1 fail |
 
@@ -105,14 +108,17 @@ Eight rules covering an intrusion from first discovery to ransomware, plus two c
 account-takeover signals. Several come from the behaviors in a public BumbleBee-to-Akira
 ransomware intrusion report.
 
-```mermaid
-flowchart LR
-    D["Discovery<br/>nltest trusts"] --> P["Persistence<br/>RustDesk service"]
-    P --> C["Credential access<br/>LSASS dump, NTDS.dit"]
-    C --> I["Impact<br/>shadow copies deleted"]
-    X["Execution<br/>encoded PowerShell"] -.-> C
-    A["Cloud<br/>console login without MFA"] --> L["Cloud<br/>CloudTrail stopped"]
-```
+![The Frontline Pack plotted on the MITRE ATT&CK tactic line under Lockheed Martin Kill Chain phases, colored by whether each rule fired on a real recorded attack](docs/images/attack-coverage.svg)
+
+**Proven twice, beyond the samples** ([ADR 0006](docs/decisions/0006-real-data-backtest-and-second-engine.md)):
+
+- **Real recorded attacks.** CI replays 13 pinned [OTRF](https://github.com/OTRF/Security-Datasets)
+  recordings (59,093 events) against every rule. The LSASS and encoded-PowerShell rules fire on
+  the real attacks, nothing fires where it shouldn't, and same-technique methods a rule doesn't
+  cover are listed as gaps, not hidden. Full results: [docs/backtest.md](docs/backtest.md).
+- **A second engine.** CI runs every rule through [RSigma](https://github.com/timescale/rsigma),
+  an independent Sigma engine, on the same samples and recordings, and fails on any
+  disagreement with Ringtail's matcher.
 
 | Rule | ATT&CK | Tests | Card |
 |---|---|---|---|
@@ -144,6 +150,7 @@ Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_posi
 - [ADR 0003: Browser BYOK architecture](docs/decisions/0003-browser-byok-architecture.md)
 - [ADR 0004: SIEM query conversion](docs/decisions/0004-siem-conversion.md)
 - [ADR 0005: Browser extension](docs/decisions/0005-browser-extension.md)
+- [ADR 0006: Real-data backtest and a second engine](docs/decisions/0006-real-data-backtest-and-second-engine.md)
 
 ## License
 
