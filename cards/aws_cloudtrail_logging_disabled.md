@@ -27,6 +27,24 @@ Exact logic, generated from the rule:
 - **selection**: `eventSource` is `'cloudtrail.amazonaws.com'` **and** `eventName` is any of `'StopLogging'`, `'DeleteTrail'`
 - **Condition**: `selection`
 
+## SIEM queries
+
+Generated from the rule by `ringtail convert`. Check the field names against your own
+data before deploying: they assume the schema noted for each query.
+
+**Splunk (SPL)**: CloudTrail JSON field names (Splunk Add-on for AWS)
+
+```spl
+sourcetype="aws:cloudtrail" eventSource="cloudtrail.amazonaws.com" (eventName IN ("StopLogging", "DeleteTrail"))
+```
+
+**Microsoft Sentinel / Defender XDR (KQL)**: Sentinel AWSCloudTrail table (AWS S3 connector)
+
+```kql
+AWSCloudTrail
+| where EventSource =~ "cloudtrail.amazonaws.com" and (EventName in~ ("StopLogging", "DeleteTrail"))
+```
+
 ## Known false positives
 
 - Planned trail changes, such as consolidating to an organization trail or decommissioning an account

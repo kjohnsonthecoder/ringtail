@@ -64,6 +64,8 @@ for a human to review instead of going straight into the Frontline Pack.
 | Model-chosen metadata (`id`, `date`, `author`, `status`) | Overwritten by code: fresh UUID, today's date, `status: experimental` | `pipeline.py` |
 | Model-chosen file name used for path traversal (`../../x`) | Slug must match `^[a-z][a-z0-9_]{2,63}$`, or it's rebuilt from the title; files are only written under the chosen output directory | `pipeline.py` |
 | Retry loop runs forever or burns money | Hard cap of 3 attempts, then stop and report | `pipeline.py` |
+| AI-drafted rule values break out of the SIEM query shown in a card (e.g. a value containing three backticks) | Each query sits in a code fence longer than any backtick run in it; on the page, queries are inserted as text | `convert.code_fence`, `web/app.js` |
+| A SIEM query with a guessed field name, which silently matches nothing | KQL maps tables and fields explicitly; anything unmapped gets "not available" with the reason, never a guess (ADR 0004) | `convert.py` |
 
 **Sample guardrails** (to fight self-agreeing tests):
 

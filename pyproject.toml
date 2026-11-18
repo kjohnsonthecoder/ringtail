@@ -18,6 +18,9 @@ dependencies = [
     # Already installed by pySigma; declared because card.py imports it directly.
     "pyyaml>=6",
     "anthropic>=2.10",
+    # SIEM conversion (ADR 0004). Pinned to a minor version: cards embed its output and CI
+    # fails on a stale card, so an upgrade should be a deliberate commit that regenerates them.
+    "pysigma-backend-splunk>=3.0.1,<3.1",
 ]
 
 [project.optional-dependencies]

@@ -27,3 +27,5 @@ jobs:
         run: ringtail test rules/
       - name: Detection cards are up to date
         run: ringtail card rules/ --check
+      - name: Every rule converts to Splunk SPL and KQL
+        run: ringtail convert rules/ > /dev/null

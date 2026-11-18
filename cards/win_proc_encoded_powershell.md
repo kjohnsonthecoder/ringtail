@@ -30,6 +30,24 @@ Exact logic, generated from the rule:
 - **selection_enc**: `CommandLine` contains any of `' -e '`, `' -en '`, `' -enc '`, `' -enco'`, `' -ec '` (also matches `/` and Unicode dash look-alikes in place of `-`)
 - **Condition**: `all of selection_*`
 
+## SIEM queries
+
+Generated from the rule by `ringtail convert`. Check the field names against your own
+data before deploying: they assume the schema noted for each query.
+
+**Splunk (SPL)**: Windows event and Sysmon field names (Splunk Add-on for Microsoft Windows / Sysmon)
+
+```spl
+(Image IN ("*\\powershell.exe", "*\\pwsh.exe") OR OriginalFileName IN ("PowerShell.EXE", "pwsh.dll")) (CommandLine="* -e *" OR CommandLine="* /e *" OR CommandLine="* –e *" OR CommandLine="* —e *" OR CommandLine="* ―e *" OR CommandLine="* -en *" OR CommandLine="* /en *" OR CommandLine="* –en *" OR CommandLine="* —en *" OR CommandLine="* ―en *" OR CommandLine="* -enc *" OR CommandLine="* /enc *" OR CommandLine="* –enc *" OR CommandLine="* —enc *" OR CommandLine="* ―enc *" OR CommandLine="* -enco*" OR CommandLine="* /enco*" OR CommandLine="* –enco*" OR CommandLine="* —enco*" OR CommandLine="* ―enco*" OR CommandLine="* -ec *" OR CommandLine="* /ec *" OR CommandLine="* –ec *" OR CommandLine="* —ec *" OR CommandLine="* ―ec *")
+```
+
+**Microsoft Sentinel / Defender XDR (KQL)**: Defender XDR DeviceProcessEvents (also in Sentinel with the Defender XDR connector)
+
+```kql
+DeviceProcessEvents
+| where ((FolderPath endswith "\\powershell.exe" or FolderPath endswith "\\pwsh.exe") or (ProcessVersionInfoOriginalFileName in~ ("PowerShell.EXE", "pwsh.dll"))) and (ProcessCommandLine contains " -e " or ProcessCommandLine contains " /e " or ProcessCommandLine contains " –e " or ProcessCommandLine contains " —e " or ProcessCommandLine contains " ―e " or ProcessCommandLine contains " -en " or ProcessCommandLine contains " /en " or ProcessCommandLine contains " –en " or ProcessCommandLine contains " —en " or ProcessCommandLine contains " ―en " or ProcessCommandLine contains " -enc " or ProcessCommandLine contains " /enc " or ProcessCommandLine contains " –enc " or ProcessCommandLine contains " —enc " or ProcessCommandLine contains " ―enc " or ProcessCommandLine contains " -enco" or ProcessCommandLine contains " /enco" or ProcessCommandLine contains " –enco" or ProcessCommandLine contains " —enco" or ProcessCommandLine contains " ―enco" or ProcessCommandLine contains " -ec " or ProcessCommandLine contains " /ec " or ProcessCommandLine contains " –ec " or ProcessCommandLine contains " —ec " or ProcessCommandLine contains " ―ec ")
+```
+
 ## Known false positives
 
 - Management and deployment tools (SCCM, Intune, some RMM agents) that legitimately pass encoded commands

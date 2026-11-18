@@ -152,6 +152,40 @@ def validate(
     raise typer.Exit(EXIT_PASS if all(r.passed for r in reports) else EXIT_FAIL)
 
 
+@app.command()
+def convert(
+    paths: List[Path] = typer.Argument(..., help="Rule files, or directories to search for *.yml rules."),
+    target: str = typer.Option("all", "--target", "-t", help="splunk, kql, or all."),
+    as_json: bool = typer.Option(False, "--json", help="Print machine-readable results."),
+) -> None:
+    """Convert rules to SIEM queries: Splunk SPL and Microsoft Sentinel / Defender KQL."""
+    from ringtail.convert import TARGETS, convert_rule
+
+    if target != "all" and target not in TARGETS:
+        typer.echo(f"Unknown target '{target}'. Choose from: all, {', '.join(TARGETS)}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    targets = list(TARGETS) if target == "all" else [target]
+    rules = _resolve_rules(paths)
+
+    results = []
+    for r in rules:
+        convs = convert_rule(r.read_text(encoding="utf-8"), targets)
+        results.append({"rule": r.as_posix(), "queries": [c.to_dict() for c in convs]})
+    ok = all(q["query"] for res in results for q in res["queries"])
+
+    if as_json:
+        typer.echo(json.dumps(results, indent=2, ensure_ascii=False))
+    else:
+        for res in results:
+            typer.echo(f"=== {res['rule']}")
+            for q in res["queries"]:
+                if q["query"]:
+                    typer.echo(f"--- {q['label']} [{q['schema']}]\n{q['query']}\n")
+                else:
+                    typer.echo(f"--- {q['label']}: not available ({q['error']})\n")
+    raise typer.Exit(EXIT_PASS if ok else EXIT_FAIL)
+
+
 def _resolve_rules(paths: List[Path]) -> List[Path]:
     missing = [p for p in paths if not p.exists()]
     if missing:
