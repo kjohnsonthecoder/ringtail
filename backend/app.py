@@ -12,6 +12,8 @@ Run locally:  uvicorn backend.app:app --reload
 
 from __future__ import annotations
 
+import asyncio
+import hmac
 import json
 import os
 import threading
@@ -47,6 +49,23 @@ def client_ip(request: Request, ip_header: str | None) -> str:
         if value:
             return value
     return request.client.host if request.client else "unknown"
+
+
+# Optional shared passcode for the API. Empty (the default) leaves the site open. Set it on
+# the host to lock the API without a code change; delete it to reopen. It guards against
+# cost abuse, not key theft: see docs/threat-model.md, "Why there's no login".
+ACCESS_CODE = os.environ.get("RINGTAIL_ACCESS_CODE", "").strip() or None
+ACCESS_HEADER = "x-ringtail-access-code"
+
+# CPU-bound checks allowed to run at once across all clients. Extra requests get a quick
+# 503 instead of queueing, so a flood can't pile up work. The rate limit is per IP; this
+# is the server-wide cap.
+MAX_CONCURRENT = int(os.environ.get("RINGTAIL_MAX_CONCURRENT", 4))
+
+
+def access_ok(given: str | None, expected: str) -> bool:
+    """Constant-time compare, so response timing doesn't leak how much of the code matched."""
+    return hmac.compare_digest((given or "").encode("utf-8"), expected.encode("utf-8"))
 
 # Headers that would carry a key. This server has no use for one, so a request carrying
 # one is a client bug (or a confused user) and is refused before anything reads the body.
@@ -99,15 +118,29 @@ class RateLimiter:
             return True, 0
 
 
+class _Busy(Exception):
+    """Every check slot is in use."""
+
+
 def _error(status: int, message: str, headers: dict | None = None) -> JSONResponse:
     return JSONResponse({"error": message}, status_code=status, headers=headers)
 
 
-def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_BYTES, ip_header: str | None = CLIENT_IP_HEADER,
-               web_dir: Path | None = WEB_DIR) -> FastAPI:
+def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_BYTES,
+               ip_header: str | None = CLIENT_IP_HEADER, access_code: str | None = ACCESS_CODE,
+               max_concurrent: int = MAX_CONCURRENT, web_dir: Path | None = WEB_DIR) -> FastAPI:
     # No interactive docs: Swagger UI loads scripts from a CDN, which the CSP forbids.
     app = FastAPI(title="Ringtail", docs_url=None, redoc_url=None)
     limiter = RateLimiter(rate_per_minute)
+    slots = asyncio.Semaphore(max_concurrent)
+
+    async def _run(fn, body):
+        # pySigma and the matcher are CPU-bound: run them off the event loop, and refuse
+        # rather than queue when every slot is busy.
+        if slots.locked():
+            raise _Busy()
+        async with slots:
+            return await run_in_threadpool(fn, body)
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
@@ -127,6 +160,10 @@ def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_
                 if not ok:
                     resp = _error(429, "too many requests; slow down",
                                   {"Retry-After": str(retry)})
+                # After the rate limit, so every wrong guess uses up one of the 30 a minute.
+                elif access_code and not access_ok(request.headers.get(ACCESS_HEADER), access_code):
+                    resp = _error(401, "This Ringtail server needs an access code. Ask the "
+                                       "person who shared the link, or run your own copy.")
             if resp is None:
                 resp = await call_next(request)
         else:
@@ -151,20 +188,23 @@ def create_app(rate_per_minute: int = RATE_PER_MINUTE, max_body: int = MAX_BODY_
         # Never echo internals or request content back.
         return _error(500, "internal error")
 
+    @app.exception_handler(_Busy)
+    async def _busy(_request: Request, _exc: _Busy):
+        return _error(503, "the server is busy; try again in a few seconds", {"Retry-After": "5"})
+
     @app.get("/api/health")
     def health():
-        return service.info()
+        # Open even when locked: Railway's health check and the page both need it. It only
+        # says whether a code is required, never anything about the code.
+        return {**service.info(), "access_code_required": bool(access_code)}
 
     @app.post("/api/prompt")
     async def prompt(request: Request):
-        body = await _json_body(request)
-        return await run_in_threadpool(service.build_prompt, body)
+        return await _run(service.build_prompt, await _json_body(request))
 
     @app.post("/api/check")
     async def check(request: Request):
-        body = await _json_body(request)
-        # pySigma and the matcher are CPU-bound; keep them off the event loop.
-        return await run_in_threadpool(service.check, body)
+        return await _run(service.check, await _json_body(request))
 
     if web_dir is not None and (Path(web_dir) / "index.html").is_file():
         app.mount("/", StaticFiles(directory=web_dir, html=True), name="web")

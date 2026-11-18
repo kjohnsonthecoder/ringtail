@@ -123,3 +123,36 @@ def test_proxy_headers_ignored_unless_configured(tmp_path):
     assert c.post("/api/prompt", json=REQ, headers={"x-real-ip": "198.51.100.1"}).status_code == 200
     assert c.post("/api/prompt", json=REQ, headers={"x-real-ip": "198.51.100.2",
                                                      "x-forwarded-for": "198.51.100.3"}).status_code == 429
+
+
+def test_open_by_default(client):
+    assert client.get("/api/health").json()["access_code_required"] is False
+    assert client.post("/api/prompt", json=REQ).status_code == 200
+
+
+def test_access_code_locks_the_api_but_not_health_or_page(tmp_path):
+    (tmp_path / "index.html").write_text("<!doctype html><title>t</title>", encoding="utf-8")
+    c = TestClient(create_app(access_code="purple-otter-42", web_dir=tmp_path))
+    assert c.get("/api/health").json()["access_code_required"] is True
+    assert c.get("/").status_code == 200
+    for headers in ({}, {"x-ringtail-access-code": "wrong"}, {"x-ringtail-access-code": "purple-otter-4"}):
+        r = c.post("/api/prompt", json=REQ, headers=headers)
+        assert r.status_code == 401 and "access code" in r.json()["error"]
+        assert "purple" not in r.text
+    ok = c.post("/api/prompt", json=REQ, headers={"x-ringtail-access-code": "purple-otter-42"})
+    assert ok.status_code == 200
+    assert "purple" not in c.get("/api/health").text
+
+
+def test_wrong_codes_use_up_the_rate_limit(tmp_path):
+    c = TestClient(create_app(access_code="purple-otter-42", rate_per_minute=3, web_dir=tmp_path))
+    codes = [c.post("/api/prompt", json=REQ, headers={"x-ringtail-access-code": f"guess{i}"}).status_code
+             for i in range(4)]
+    assert codes == [401, 401, 401, 429]
+
+
+def test_busy_server_refuses_instead_of_queueing(tmp_path):
+    c = TestClient(create_app(max_concurrent=0, web_dir=tmp_path))
+    r = c.post("/api/check", json={"draft": GOOD_DRAFT})
+    assert r.status_code == 503 and r.headers["retry-after"] == "5"
+    assert c.get("/api/health").status_code == 200
