@@ -1,0 +1,42 @@
+[
+  {
+    "_comment": "Near miss: vssadmin listing shadow copies, not deleting them.",
+    "EventID": 1,
+    "Computer": "FS-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+    "OriginalFileName": "VSSADMIN.EXE",
+    "CommandLine": "vssadmin list shadows /for=C:",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Near miss: wmic listing shadow copies.",
+    "EventID": 1,
+    "Computer": "FS-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+    "OriginalFileName": "wmic.exe",
+    "CommandLine": "wmic shadowcopy list brief",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Near miss: PowerShell inventorying shadow copies through the same WMI class.",
+    "EventID": 1,
+    "Computer": "FS-EXAMPLE-02.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "OriginalFileName": "PowerShell.EXE",
+    "CommandLine": "powershell.exe -c \"Get-CimInstance Win32_ShadowCopy | Select-Object ID, InstallDate\"",
+    "ParentImage": "C:\\Windows\\explorer.exe"
+  },
+  {
+    "_comment": "Near miss: vssadmin creating a shadow copy (Windows Server) during a backup job.",
+    "EventID": 1,
+    "Computer": "FS-EXAMPLE-01.example.local",
+    "User": "NT AUTHORITY\\SYSTEM",
+    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+    "OriginalFileName": "VSSADMIN.EXE",
+    "CommandLine": "vssadmin create shadow /for=D:",
+    "ParentImage": "C:\\Program Files\\ExampleBackup\\agent.exe"
+  }
+]

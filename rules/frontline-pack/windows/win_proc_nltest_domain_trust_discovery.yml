@@ -1,0 +1,33 @@
+title: Nltest Domain Trust or Domain Controller Discovery
+id: 1396e2ee-416e-448c-a2ac-e7f13ad55915
+status: experimental
+description: |
+  Detects nltest.exe listing domain trusts or domain controllers. After a first foothold,
+  intrusion operators run it within minutes to map the Active Directory forest before
+  moving laterally (seen in BumbleBee, Qakbot, and IcedID intrusions leading to ransomware).
+references:
+  - https://attack.mitre.org/techniques/T1482/
+  - https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731935(v=ws.11)
+author: Kevin Johnson (Ringtail Frontline Pack)
+date: 2026-11-18
+tags:
+  - attack.discovery
+  - attack.t1482
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\nltest.exe'
+    - OriginalFileName: 'nltestrk.exe'
+  selection_cli:
+    # windash: matches /domain_trusts as well as -domain_trusts.
+    CommandLine|contains|windash:
+      - '-domain_trusts'
+      - '-all_trusts'
+      - '-trusted_domains'
+      - '-dclist'
+  condition: all of selection_*
+falsepositives:
+  - Domain administrators and AD health scripts checking trusts (expect a short, known list of admin accounts and hosts)
+level: medium

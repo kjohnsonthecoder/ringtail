@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "The common form: MiniDump by name, LSASS PID, full dump to Temp.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-03.example.local",
+    "User": "NT AUTHORITY\\SYSTEM",
+    "Image": "C:\\Windows\\System32\\rundll32.exe",
+    "OriginalFileName": "RUNDLL32.EXE",
+    "CommandLine": "rundll32.exe C:\\Windows\\System32\\comsvcs.dll, MiniDump 624 C:\\Windows\\Temp\\out.dmp full",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Export called by ordinal #24 to dodge the MiniDump string.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-04.example.local",
+    "User": "NT AUTHORITY\\SYSTEM",
+    "Image": "C:\\Windows\\System32\\rundll32.exe",
+    "OriginalFileName": "RUNDLL32.EXE",
+    "CommandLine": "rundll32 comsvcs.dll #24 712 C:\\ProgramData\\d.bin full",
+    "ParentImage": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe"
+  },
+  {
+    "_comment": "Mixed case through PowerShell.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-03.example.local",
+    "User": "NT AUTHORITY\\SYSTEM",
+    "Image": "C:\\Windows\\System32\\rundll32.exe",
+    "OriginalFileName": "RUNDLL32.EXE",
+    "CommandLine": "RunDll32.exe C:\\windows\\system32\\COMSVCS.dll MINIDUMP 624 C:\\Users\\Public\\l.dmp full",
+    "ParentImage": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+  }
+]

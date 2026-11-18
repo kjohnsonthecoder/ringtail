@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "Trust enumeration from a beachhead, spawned by an injected process.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-07.example.local",
+    "User": "EXAMPLE\\jdoe-placeholder",
+    "Image": "C:\\Windows\\System32\\nltest.exe",
+    "OriginalFileName": "nltestrk.exe",
+    "CommandLine": "nltest /domain_trusts /all_trusts",
+    "ParentImage": "C:\\Users\\jdoe-placeholder\\AppData\\Local\\Temp\\AdgNsy.exe"
+  },
+  {
+    "_comment": "Domain controller list.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-07.example.local",
+    "User": "EXAMPLE\\jdoe-placeholder",
+    "Image": "C:\\Windows\\System32\\nltest.exe",
+    "OriginalFileName": "nltestrk.exe",
+    "CommandLine": "nltest.exe /dclist:example.local",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Renamed copy, dash-style switch.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-08.example.local",
+    "User": "EXAMPLE\\jdoe-placeholder",
+    "Image": "C:\\ProgramData\\n.exe",
+    "OriginalFileName": "nltestrk.exe",
+    "CommandLine": "n.exe -trusted_domains",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  }
+]

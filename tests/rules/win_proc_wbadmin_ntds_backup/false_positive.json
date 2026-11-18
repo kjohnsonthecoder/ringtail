@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "Near miss: a normal DC backup with -allCritical (captures NTDS without naming it).",
+    "EventID": 1,
+    "Computer": "DC-EXAMPLE-01.example.local",
+    "User": "NT AUTHORITY\\SYSTEM",
+    "Image": "C:\\Windows\\System32\\wbadmin.exe",
+    "OriginalFileName": "WBADMIN.EXE",
+    "CommandLine": "wbadmin start backup -backupTarget:E: -allCritical -quiet",
+    "ParentImage": "C:\\Windows\\System32\\svchost.exe"
+  },
+  {
+    "_comment": "Near miss: listing backup versions.",
+    "EventID": 1,
+    "Computer": "DC-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\wbadmin.exe",
+    "OriginalFileName": "WBADMIN.EXE",
+    "CommandLine": "wbadmin get versions",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Near miss: an admin opening notes about NTDS in Notepad.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\notepad.exe",
+    "OriginalFileName": "NOTEPAD.EXE",
+    "CommandLine": "notepad.exe C:\\Users\\admin-placeholder\\Documents\\ntds-recovery-plan.txt",
+    "ParentImage": "C:\\Windows\\explorer.exe"
+  }
+]

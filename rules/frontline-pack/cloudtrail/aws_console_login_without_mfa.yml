@@ -1,0 +1,32 @@
+title: AWS Console Sign-In Without MFA
+id: 3dd1768d-bb49-4cc4-8a06-b1664fc50561
+status: experimental
+description: |
+  Detects a successful AWS Management Console sign-in by an IAM user or the root user that
+  didn't use MFA. A stolen or guessed password is enough for that sign-in, so it's a common
+  first step in cloud account takeover. Federated (SSO) sign-ins are excluded because
+  CloudTrail reports them as MFAUsed No even when the identity provider enforced MFA.
+references:
+  - https://attack.mitre.org/techniques/T1078/004/
+  - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference-aws-console-sign-in-events.html
+author: Kevin Johnson (Ringtail Frontline Pack)
+date: 2026-11-18
+tags:
+  - attack.initial-access
+  - attack.t1078.004
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    additionalEventData.MFAUsed: 'No'
+    responseElements.ConsoleLogin: 'Success'
+  filter_federated:
+    userIdentity.type: AssumedRole
+  condition: selection and not filter_federated
+falsepositives:
+  - IAM users not yet enrolled in MFA (fix the gap; don't tune it out)
+  - Break-glass root sign-ins during a documented emergency
+level: medium

@@ -1,0 +1,24 @@
+[
+  {
+    "_comment": "Default RustDesk service install.",
+    "EventID": 7045,
+    "Provider_Name": "Service Control Manager",
+    "Computer": "SRV-EXAMPLE-06.example.local",
+    "ServiceName": "RustDesk",
+    "ImagePath": "\"C:\\Program Files\\RustDesk\\rustdesk.exe\" --service",
+    "ServiceType": "user mode service",
+    "StartType": "auto start",
+    "AccountName": "LocalSystem"
+  },
+  {
+    "_comment": "Service given an innocent name, but the binary path gives it away.",
+    "EventID": 7045,
+    "Provider_Name": "Service Control Manager",
+    "Computer": "BKP-EXAMPLE-01.example.local",
+    "ServiceName": "WinUpdateHelper",
+    "ImagePath": "C:\\ProgramData\\rustdesk\\rustdesk.exe --service",
+    "ServiceType": "user mode service",
+    "StartType": "auto start",
+    "AccountName": "LocalSystem"
+  }
+]

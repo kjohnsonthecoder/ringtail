@@ -1,0 +1,34 @@
+title: Wbadmin Backup or Recovery Naming the NTDS Database
+id: c43d3d7e-8590-4b22-899f-600343a6c5e4
+status: experimental
+description: |
+  Detects wbadmin.exe backing up or recovering a path that names NTDS, the Active Directory
+  database folder. Attackers on a domain controller use wbadmin to copy NTDS.dit out for
+  offline password-hash extraction (seen in BumbleBee-to-Akira intrusions). Normal DC
+  backups use -allCritical or -systemState instead of naming ntds.dit directly.
+references:
+  - https://attack.mitre.org/techniques/T1003/003/
+  - https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wbadmin-start-backup
+author: Kevin Johnson (Ringtail Frontline Pack)
+date: 2026-11-18
+tags:
+  - attack.credential-access
+  - attack.t1003.003
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\wbadmin.exe'
+    - OriginalFileName: 'WBADMIN.EXE'
+  selection_action:
+    CommandLine|contains:
+      - 'start backup'
+      - 'start recovery'
+  selection_ntds:
+    CommandLine|contains: 'ntds'
+  condition: all of selection_*
+falsepositives:
+  - Custom DC backup jobs that include the NTDS folder by name instead of using -allCritical or -systemState
+  - Authorized Active Directory disaster recovery restoring NTDS files from a wbadmin backup
+level: high

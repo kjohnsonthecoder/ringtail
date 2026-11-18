@@ -1,0 +1,27 @@
+# Human judgment for the card. Everything else in cards/win_system_rustdesk_service_install.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch an intruder installing RustDesk, a free remote desktop tool, as a Windows service
+  for hands-on access that survives reboots and looks like normal IT tooling.
+
+summary: >-
+  Fires on System log event 7045 ("a service was installed") from the Service Control
+  Manager when the service name or its binary path contains "rustdesk". Renaming the
+  service doesn't help an attacker if the binary path still gives it away. Already
+  installed RustDesk services starting or stopping don't fire.
+
+triage:
+  - >-
+    Check whether RustDesk is approved in your organization. If it is, compare the install
+    path and the host against your IT deployment records; an install outside them is still
+    suspicious.
+  - >-
+    Find who installed it: correlate with logons to the host just before (event 4624,
+    especially RDP logon type 10) and with the account that created the service.
+  - >-
+    Find the RustDesk relay or ID server it connects to (outbound network connections from
+    rustdesk.exe). A self-hosted relay on an unfamiliar IP address is a strong sign of
+    attacker infrastructure.
+  - >-
+    Look for the same service on other hosts. Intruders often install it on several servers
+    at once. Remove it, block the binary hash, and block the relay at the firewall.

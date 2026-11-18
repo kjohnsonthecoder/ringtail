@@ -1,0 +1,61 @@
+[
+  {
+    "_comment": "IAM user signs in with a password only.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER",
+      "arn": "arn:aws:iam::111122223333:user/example-analyst",
+      "accountId": "111122223333",
+      "userName": "example-analyst"
+    },
+    "eventTime": "2026-11-18T02:41:09Z",
+    "eventSource": "signin.amazonaws.com",
+    "eventName": "ConsoleLogin",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "198.51.100.23",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "requestParameters": null,
+    "responseElements": {"ConsoleLogin": "Success"},
+    "additionalEventData": {
+      "LoginTo": "https://console.aws.amazon.com/console/home",
+      "MobileVersion": "No",
+      "MFAUsed": "No"
+    },
+    "eventID": "00000000-0000-4000-8000-0000000000b1",
+    "readOnly": false,
+    "eventType": "AwsConsoleSignIn",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  },
+  {
+    "_comment": "Root user signs in without MFA: the worst case.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "Root",
+      "principalId": "111122223333",
+      "arn": "arn:aws:iam::111122223333:root",
+      "accountId": "111122223333"
+    },
+    "eventTime": "2026-11-18T04:02:51Z",
+    "eventSource": "signin.amazonaws.com",
+    "eventName": "ConsoleLogin",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "203.0.113.77",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64)",
+    "requestParameters": null,
+    "responseElements": {"ConsoleLogin": "Success"},
+    "additionalEventData": {
+      "LoginTo": "https://console.aws.amazon.com/console/home",
+      "MobileVersion": "No",
+      "MFAUsed": "No"
+    },
+    "eventID": "00000000-0000-4000-8000-0000000000b2",
+    "readOnly": false,
+    "eventType": "AwsConsoleSignIn",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  }
+]

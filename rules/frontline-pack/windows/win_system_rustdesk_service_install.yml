@@ -1,0 +1,32 @@
+title: RustDesk Installed as a Windows Service
+id: 4d713f74-d3b7-465a-bbbe-2f5265758ebf
+status: experimental
+description: |
+  Detects a new Windows service whose name or binary path is RustDesk, an open-source
+  remote desktop tool. Intrusion operators install it as a service on several servers for
+  hands-on access that survives reboots and blends in with IT tooling (seen in
+  BumbleBee-to-Akira intrusions). Uses System log event 7045 (a service was installed).
+references:
+  - https://attack.mitre.org/techniques/T1219/002/
+  - https://attack.mitre.org/techniques/T1543/003/
+author: Kevin Johnson (Ringtail Frontline Pack)
+date: 2026-11-18
+tags:
+  - attack.command-and-control
+  - attack.t1219.002
+  - attack.persistence
+  - attack.t1543.003
+logsource:
+  product: windows
+  service: system
+detection:
+  selection_event:
+    Provider_Name: 'Service Control Manager'
+    EventID: 7045
+  selection_tool:
+    - ServiceName|contains: 'rustdesk'
+    - ImagePath|contains: 'rustdesk'
+  condition: all of selection_*
+falsepositives:
+  - Organizations that sanction RustDesk for IT support (exclude your approved install path or deployment account)
+level: high

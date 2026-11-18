@@ -1,0 +1,64 @@
+[
+  {
+    "_comment": "Near miss: the same user signing in with MFA.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER",
+      "arn": "arn:aws:iam::111122223333:user/example-analyst",
+      "accountId": "111122223333",
+      "userName": "example-analyst"
+    },
+    "eventTime": "2026-11-18T13:15:00Z",
+    "eventSource": "signin.amazonaws.com",
+    "eventName": "ConsoleLogin",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "198.51.100.23",
+    "responseElements": {"ConsoleLogin": "Success"},
+    "additionalEventData": {"MobileVersion": "No", "MFAUsed": "Yes"},
+    "eventID": "00000000-0000-4000-8000-0000000000c1",
+    "eventType": "AwsConsoleSignIn",
+    "recipientAccountId": "111122223333"
+  },
+  {
+    "_comment": "Near miss: a failed password attempt (no session was created).",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER",
+      "accountId": "111122223333",
+      "userName": "example-analyst"
+    },
+    "eventTime": "2026-11-18T02:40:31Z",
+    "eventSource": "signin.amazonaws.com",
+    "eventName": "ConsoleLogin",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "198.51.100.23",
+    "errorMessage": "Failed authentication",
+    "responseElements": {"ConsoleLogin": "Failure"},
+    "additionalEventData": {"MobileVersion": "No", "MFAUsed": "No"},
+    "eventID": "00000000-0000-4000-8000-0000000000c2",
+    "eventType": "AwsConsoleSignIn",
+    "recipientAccountId": "111122223333"
+  },
+  {
+    "_comment": "Near miss: SSO sign-in through an assumed role. MFAUsed is No, but the IdP enforced MFA.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "AssumedRole",
+      "principalId": "AROAEXAMPLEPLACEHOLDER:jdoe@example.com",
+      "arn": "arn:aws:sts::111122223333:assumed-role/AWSReservedSSO_ReadOnly_0000/jdoe@example.com",
+      "accountId": "111122223333"
+    },
+    "eventTime": "2026-11-18T14:02:12Z",
+    "eventSource": "signin.amazonaws.com",
+    "eventName": "ConsoleLogin",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "192.0.2.50",
+    "responseElements": {"ConsoleLogin": "Success"},
+    "additionalEventData": {"MobileVersion": "No", "MFAUsed": "No"},
+    "eventID": "00000000-0000-4000-8000-0000000000c3",
+    "eventType": "AwsConsoleSignIn",
+    "recipientAccountId": "111122223333"
+  }
+]

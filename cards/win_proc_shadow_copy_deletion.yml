@@ -1,0 +1,30 @@
+# Human judgment for the card. Everything else in cards/win_proc_shadow_copy_deletion.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch shadow copies being deleted, the step ransomware takes right before or during
+  encryption so the victim can't restore files. When this fires, impact may be minutes
+  away: treat it as an incident until proven otherwise.
+
+summary: >-
+  Fires on three ways to delete Volume Shadow Copies from a command line: vssadmin with
+  "delete" and "shadows", wmic with "shadowcopy" and "delete", or PowerShell using the
+  Win32_ShadowCopy class with Delete(), Remove-CimInstance, or Remove-WmiObject. Renamed
+  vssadmin and wmic copies are caught by the original file name. Listing or creating
+  shadow copies doesn't fire.
+
+triage:
+  - >-
+    Move fast. Check the parent process and user. A backup agent you recognize, running as
+    SYSTEM on its normal schedule, is the main benign case. An unknown binary (for example
+    `locker.exe` in a user-writable folder), `cmd.exe` from a remote session, or a domain
+    admin account at 3 a.m. is ransomware until proven otherwise.
+  - >-
+    If it's not a known backup job, isolate the host now and look for the same command on
+    other hosts in the last hour. Ransomware usually runs this across many machines at once.
+  - >-
+    Look for what came just before: new services, RDP logons, credential dumping (LSASS,
+    NTDS), and large outbound transfers. Exfiltration often finishes before encryption starts.
+  - >-
+    Coverage gap: ransomware that calls WMI from inside its own code (Akira does this)
+    never creates a command line for this rule to see. Pair this rule with WMI activity
+    logging and EDR (endpoint detection and response) alerts for shadow copy deletion.

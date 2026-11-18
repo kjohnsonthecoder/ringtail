@@ -1,0 +1,29 @@
+# Human judgment for the card. Everything else in cards/win_proc_nltest_domain_trust_discovery.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch an intruder mapping Active Directory soon after getting a foothold: listing
+  domain trusts and domain controllers to decide where to go next. It's an early warning,
+  often hours before the damaging steps.
+
+summary: >-
+  Fires when nltest (matched by path or original file name) runs with /domain_trusts,
+  /all_trusts, /trusted_domains, or /dclist. Dash or slash style both count. Routine
+  helpdesk uses such as checking the secure channel (/sc_query) or locating a DC
+  (/dsgetdc) don't fire.
+
+triage:
+  - >-
+    Check who ran it and from where. Domain admins on admin workstations or a known
+    AD health script are plausible. A regular user's workstation, or nltest spawned by an
+    unusual parent (an unknown executable in AppData or Temp, Office, a script host), is
+    not.
+  - >-
+    Look for other discovery on the same host within the hour: systeminfo, whoami /groups,
+    net group "domain admins", AdFind, or BloodHound collectors. Several together is a
+    strong signal of an intruder.
+  - >-
+    Trace the parent process back to how it started: a loader, a phishing attachment, or
+    a remote access tool. That's your initial access.
+  - >-
+    Coverage gap: this rule only covers nltest. PowerShell (Get-ADTrust), AdFind, and
+    BloodHound do the same discovery and need their own rules.

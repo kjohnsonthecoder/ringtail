@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "Near miss: nltest checking the secure channel, a routine helpdesk fix.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-07.example.local",
+    "User": "EXAMPLE\\helpdesk-placeholder",
+    "Image": "C:\\Windows\\System32\\nltest.exe",
+    "OriginalFileName": "nltestrk.exe",
+    "CommandLine": "nltest /sc_query:example.local",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Near miss: nltest locating a DC for the user's own domain.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-07.example.local",
+    "User": "EXAMPLE\\helpdesk-placeholder",
+    "Image": "C:\\Windows\\System32\\nltest.exe",
+    "OriginalFileName": "nltestrk.exe",
+    "CommandLine": "nltest /dsgetdc:example.local",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  },
+  {
+    "_comment": "Out of scope: the PowerShell AD module listing trusts. A different tool; this rule is nltest-only (see the card).",
+    "EventID": 1,
+    "Computer": "DC-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "OriginalFileName": "PowerShell.EXE",
+    "CommandLine": "powershell.exe -c \"Get-ADTrust -Filter * | Select-Object Name, Direction\"",
+    "ParentImage": "C:\\Windows\\explorer.exe"
+  }
+]

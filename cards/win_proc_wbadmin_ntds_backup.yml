@@ -1,0 +1,34 @@
+# Human judgment for the card. Everything else in cards/win_proc_wbadmin_ntds_backup.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch an attacker on a domain controller using Windows' own backup tool to copy the
+  Active Directory database (NTDS.dit). With that file and the SYSTEM hive, they can crack
+  or pass the password hashes of every account in the domain.
+
+summary: >-
+  Fires when wbadmin (matched by path or original file name, so renamed copies count)
+  runs "start backup" or "start recovery" with "ntds" anywhere in the command line.
+  Normal domain controller backups use -allCritical or -systemState and don't name the
+  NTDS folder, so they don't fire.
+
+triage:
+  - >-
+    Confirm the host is a domain controller and identify the account. Compare against your
+    backup team's documented jobs: a scheduled job under the backup service account is
+    plausible; an interactive admin session or a newly created admin account is not.
+  - >-
+    Check the backup target. A UNC path to a workstation, an IP address, or a removable
+    drive is a red flag. Look for the copied files there and for the SYSTEM registry hive
+    being saved too (`reg save HKLM\SYSTEM`).
+  - >-
+    Look for staging and exfiltration right after: archive tools, RDP clipboard transfers,
+    FileZilla or rclone connections, and large outbound transfers from the DC or the
+    target host.
+  - >-
+    If it's malicious, assume every domain credential is compromised. That means resetting
+    the KRBTGT account twice and resetting privileged accounts. Plan this with your AD team;
+    don't do it ad hoc mid-incident.
+  - >-
+    Coverage gap: `wbadmin start backup -allCritical` to an attacker-controlled share also
+    captures NTDS.dit without naming it, and this rule misses it. Consider a companion rule
+    for -allCritical or -systemState backups to unusual targets.

@@ -1,0 +1,26 @@
+# Human judgment for the card. Everything else in cards/aws_console_login_without_mfa.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch someone signing in to the AWS console with only a password, so a stolen or guessed
+  password is all it took. For the root user, this is a critical finding on its own.
+
+summary: >-
+  Fires on a successful CloudTrail ConsoleLogin event where MFAUsed is "No". Failed
+  sign-ins and sign-ins with MFA don't fire. SSO sign-ins through an assumed role are
+  excluded, because CloudTrail reports them as MFAUsed "No" even when your identity
+  provider enforced MFA.
+
+triage:
+  - >-
+    Identify the user. If it's root, escalate immediately: root should always have MFA,
+    and root sign-ins should be rare and documented.
+  - >-
+    Check the source IP address and user agent against the user's normal pattern. A new
+    country, a hosting provider, or a VPN exit node raises suspicion.
+  - >-
+    Review everything that session did next in CloudTrail (filter by the user and source
+    IP): new IAM users or access keys, policy changes, CloudTrail or GuardDuty changes,
+    and data access in S3.
+  - >-
+    Contact the user to confirm. If it wasn't them, disable the password, remove any new
+    access keys and users, and investigate. Either way, enforce MFA for that account.

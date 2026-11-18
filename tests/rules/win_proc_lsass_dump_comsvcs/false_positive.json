@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "Near miss: rundll32 opening a Control Panel applet.",
+    "EventID": 1,
+    "Computer": "WKSTN-EXAMPLE-01.example.local",
+    "User": "EXAMPLE\\jdoe-placeholder",
+    "Image": "C:\\Windows\\System32\\rundll32.exe",
+    "OriginalFileName": "RUNDLL32.EXE",
+    "CommandLine": "rundll32.exe shell32.dll,Control_RunDLL desk.cpl",
+    "ParentImage": "C:\\Windows\\explorer.exe"
+  },
+  {
+    "_comment": "Near miss: comsvcs.dll loaded by rundll32 for something other than MiniDump.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-03.example.local",
+    "User": "NT AUTHORITY\\SYSTEM",
+    "Image": "C:\\Windows\\System32\\rundll32.exe",
+    "OriginalFileName": "RUNDLL32.EXE",
+    "CommandLine": "rundll32.exe C:\\Windows\\System32\\comsvcs.dll,DllRegisterServer",
+    "ParentImage": "C:\\Windows\\System32\\msiexec.exe"
+  },
+  {
+    "_comment": "Out of scope: a sanctioned ProcDump crash dump of an app. A different tool, so this rule doesn't cover it either way.",
+    "EventID": 1,
+    "Computer": "SRV-EXAMPLE-05.example.local",
+    "User": "EXAMPLE\\admin-placeholder",
+    "Image": "C:\\Tools\\Sysinternals\\procdump64.exe",
+    "OriginalFileName": "procdump",
+    "CommandLine": "procdump64.exe -ma 4410 C:\\Dumps\\app-hang.dmp",
+    "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+  }
+]

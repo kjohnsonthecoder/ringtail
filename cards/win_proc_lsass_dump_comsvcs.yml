@@ -1,0 +1,30 @@
+# Human judgment for the card. Everything else in cards/win_proc_lsass_dump_comsvcs.md
+# is generated from the rule and its test results. Regenerate with: ringtail card rules/
+goal: >-
+  Catch credentials being stolen from memory with a tool already built into Windows:
+  rundll32 calling comsvcs.dll's MiniDump function to write a dump of LSASS, the process
+  that holds logged-on users' password hashes and Kerberos tickets.
+
+summary: >-
+  Fires when rundll32 (matched by path or original file name) loads comsvcs.dll and calls
+  its MiniDump export, by name or by its ordinal number (#24, used to dodge string
+  matching). Matching is case-insensitive, so mixed-case tricks don't help.
+
+triage:
+  - >-
+    Find the target process ID (the number after MiniDump) and check whether it was LSASS
+    at that time. It almost always is. Note the dump file path.
+  - >-
+    Check the parent process and how it started: WmiPrvSE.exe, services.exe, or a remote
+    service install points to remote execution from another host (lsassy and similar tools
+    work this way). Find that source host; it's likely compromised too.
+  - >-
+    Look for the dump file being read or copied off (SMB access to the path, archive tools)
+    and delete it as part of containment.
+  - >-
+    Treat every account logged on to that host as compromised: reset passwords, revoke
+    sessions, and check those accounts for logons elsewhere.
+  - >-
+    Coverage gap: other LSASS dump methods (ProcDump, nanodump, direct API calls from
+    malware) don't go through comsvcs.dll. Pair this rule with LSASS process-access
+    monitoring (Sysmon event 10) or EDR credential-theft alerts.
