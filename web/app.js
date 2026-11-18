@@ -13,6 +13,7 @@ const MODEL_RE = /^[a-z0-9][a-z0-9.\-]{2,63}$/;
 const $ = (id) => document.getElementById(id);
 const el = {
   key: $("key"), model: $("model"), forget: $("forget"), keyProblem: $("key-problem"),
+  access: $("access"), accessRow: $("access-row"), accessNote: $("access-note"),
   input: $("input"), run: $("run"), stop: $("stop"), chars: $("chars"),
   progressPanel: $("progress-panel"), log: $("log"), usage: $("usage"),
   resultPanel: $("result-panel"), summary: $("summary"),
@@ -82,12 +83,26 @@ function showUsage() {
 // ---------------------------------------------------------------------------
 // Backend (no key, ever)
 
+function accessHeaders() {
+  const h = { "content-type": "application/json" };
+  const code = el.access.value.trim();
+  if (code) h["x-ringtail-access-code"] = code;
+  return h;
+}
+
+function showAccessField(on) {
+  el.accessRow.hidden = !on;
+  el.accessNote.hidden = !on;
+}
+
 async function backend(path, body) {
   let resp;
   try {
     resp = await fetch(path, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      // The access code (if this server needs one) goes only here, to the Ringtail server.
+      // The Anthropic key never does.
+      headers: accessHeaders(),
       body: JSON.stringify(body),
       signal: controller.signal,
       credentials: "omit",
@@ -102,6 +117,10 @@ async function backend(path, body) {
     const msg = data && typeof data.error === "string" ? data.error : `HTTP ${resp.status}`;
     if (resp.status === 429) {
       throw new Error(`Ringtail server: ${msg} (try again in ${resp.headers.get("retry-after") || "a few"} seconds).`);
+    }
+    if (resp.status === 401) {
+      showAccessField(true);
+      el.access.focus();
     }
     throw new Error(`Ringtail server: ${msg}`);
   }
@@ -296,6 +315,7 @@ function setRunning(on) {
   el.stop.hidden = !on;
   el.input.readOnly = on;
   el.key.readOnly = on;
+  el.access.readOnly = on;
   el.model.readOnly = on;
 }
 
@@ -357,6 +377,7 @@ fetch("/api/health", { credentials: "omit" })
     if (!info) return;
     if (typeof info.attack_version === "string") $("attack-version").textContent = `v${info.attack_version}`;
     if (Number.isInteger(info.max_attempts)) maxAttempts = info.max_attempts;
+    if (info.access_code_required === true) showAccessField(true);
     if (typeof info.default_model === "string" && MODEL_RE.test(info.default_model)) el.model.value = info.default_model;
   })
   .catch(() => {});

@@ -35,10 +35,22 @@
         </label>
         <button id="forget" type="button" class="secondary">Forget key</button>
       </div>
+      <div id="access-row" class="row access" hidden>
+        <label class="field grow">
+          <span class="label">Access code for this Ringtail server</span>
+          <input id="access" type="password" autocomplete="off" spellcheck="false" aria-describedby="access-note">
+        </label>
+      </div>
+      <p id="access-note" class="note" hidden>This server is locked to people with its access code. The
+        code goes only to the Ringtail server, never to Anthropic, and your API key never goes to the
+        Ringtail server.</p>
       <p id="key-problem" class="problem" role="alert" hidden></p>
       <p id="key-note" class="note">Bring your own key. It stays in this tab's memory and is sent only to
         <code>api.anthropic.com</code>, never to the Ringtail server. It's gone when you close or reload
         the tab. <a href="https://github.com/kjohnsonthecoder/ringtail/blob/main/docs/decisions/0003-browser-byok-architecture.md" rel="noopener noreferrer" target="_blank">How this works</a></p>
+      <p class="note"><strong>Tip:</strong> for tools like this, use a separate key with a low monthly spend
+        limit (set both in the <a href="https://console.anthropic.com/" rel="noopener noreferrer" target="_blank">Anthropic Console</a>).
+        If that key ever leaked, the damage would stop at the limit. A typical run here costs a few cents.</p>
     </section>
 
     <section class="panel" aria-labelledby="input-h">
