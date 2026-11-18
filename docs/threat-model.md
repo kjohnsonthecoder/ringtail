@@ -183,7 +183,7 @@ The threats are about what it could see, what could reach it, and where the key 
 
 ## Out of scope for now
 
-- Firefox (different sidebar API) and Safari versions of the extension.
+- Browsers other than Chrome and Edge.
 - Fetching reports from URLs. Users paste text or pass a file. Fetching would add SSRF
   and content-type risks.
 - Defending against a compromised local machine or Python environment.

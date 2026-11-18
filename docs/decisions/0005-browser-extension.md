@@ -71,8 +71,8 @@ they drift from `web/`. The logic module is unit-tested with Node's built-in tes
 
 A zip on each GitHub release ("load unpacked") and the Chrome Web Store. The store needs
 a privacy policy, per-permission justifications, icons, and screenshots, all kept in the
-repo. Kevin owns the developer account and submits. Chrome and Edge both run Manifest V3
-side panels; Firefox uses a different sidebar API and is out of scope for now.
+repo. Kevin owns the developer account and submits. Supported browsers: Chrome and Edge,
+which both run Manifest V3 side panels.
 
 ## Consequences
 
