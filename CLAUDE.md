@@ -132,8 +132,13 @@ Exit codes: 0 = pass, 1 = validation/test failure, 2 = usage/config error
 
 1. **Windows process creation — encoded PowerShell** (ATT&CK T1059.001).
    TP: `powershell.exe -enc <base64>`; FP: normal admin PowerShell with no encoding.
-2. **AWS CloudTrail — CloudTrail logging stopped or trail deleted** (ATT&CK T1562.008).
+2. **AWS CloudTrail — CloudTrail logging stopped or trail deleted** (ATT&CK T1685.002,
+   Defense Impairment; formerly T1562.008, revoked in ATT&CK v20).
    TP: `StopLogging` / `DeleteTrail` event; FP: `DescribeTrails` / `GetTrailStatus`.
+
+ATT&CK is pinned to **v20.1** (`data/attack/`). Technique IDs in this brief must pass
+`ringtail validate`; if a future ATT&CK upgrade revokes one, the validator names the
+replacement. See `docs/decisions/0002-pinned-attack-index.md`.
 
 Hand-write small, realistic JSON sample events for tests (no real customer data, no
 real account IDs/keys — use obvious placeholders). Larger public datasets
