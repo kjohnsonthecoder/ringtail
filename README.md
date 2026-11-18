@@ -11,8 +11,11 @@ works by replaying sample logs: it must fire on the attack and stay quiet on ben
 **Try it: <https://web-production-34d65045.up.railway.app>** (bring your own Anthropic
 API key; it stays in your browser tab and goes only to Anthropic).
 
+![A real run on the web page: PowerShell encoded-command rule drafted, then proven on 4/4 attack and 5/5 benign samples](docs/images/web-run-encoded-powershell.png)
+
 > Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 done: the BYOK web page and its
 > stateless backend ([web/](web/README.md), [backend/](backend/README.md)), hosted on Railway.
+> Every rule also converts to Splunk SPL and Microsoft KQL.
 
 ## Pipeline
 
@@ -68,6 +71,7 @@ Review it, then move it into `rules/frontline-pack/` on purpose.
 | `ringtail validate <rules>` | pySigma parse + lint, required metadata, ATT&CK v20.1 IDs | 0 pass, 1 fail |
 | `ringtail test <rules>` | Replay TP/FP samples | 0 pass, 1 fail |
 | `ringtail card <rules> [--check]` | Generate detection cards, or check they're fresh | 0 pass, 1 fail/stale |
+| `ringtail convert <rules> [-t splunk\|kql]` | Splunk SPL and Microsoft Sentinel / Defender KQL queries | 0 ok, 1 not convertible |
 | `ringtail draft "<text>"` | AI draft only, prints YAML | 0 ok, 1 model error |
 | `ringtail run "<text>"` | Full loop, writes to `drafts/` | 0 pass, 1 fail |
 
@@ -87,14 +91,34 @@ uvicorn backend.app:app       # open http://127.0.0.1:8000
 
 ## Frontline Pack
 
+Eight rules covering an intrusion from first discovery to ransomware, plus two cloud
+account-takeover signals. Several come from the behaviors in a public BumbleBee-to-Akira
+ransomware intrusion report.
+
+```mermaid
+flowchart LR
+    D["Discovery<br/>nltest trusts"] --> P["Persistence<br/>RustDesk service"]
+    P --> C["Credential access<br/>LSASS dump, NTDS.dit"]
+    C --> I["Impact<br/>shadow copies deleted"]
+    X["Execution<br/>encoded PowerShell"] -.-> C
+    A["Cloud<br/>console login without MFA"] --> L["Cloud<br/>CloudTrail stopped"]
+```
+
 | Rule | ATT&CK | Tests | Card |
 |---|---|---|---|
 | [PowerShell launched with an encoded command](rules/frontline-pack/windows/win_proc_encoded_powershell.yml) | T1059.001 | 4 TP / 3 FP | [card](cards/win_proc_encoded_powershell.md) |
+| [Nltest domain trust or DC discovery](rules/frontline-pack/windows/win_proc_nltest_domain_trust_discovery.yml) | T1482 | 3 TP / 3 FP | [card](cards/win_proc_nltest_domain_trust_discovery.md) |
+| [RustDesk installed as a Windows service](rules/frontline-pack/windows/win_system_rustdesk_service_install.yml) | T1219.002, T1543.003 | 2 TP / 2 FP | [card](cards/win_system_rustdesk_service_install.md) |
+| [LSASS memory dump with comsvcs.dll MiniDump](rules/frontline-pack/windows/win_proc_lsass_dump_comsvcs.yml) | T1003.001 | 3 TP / 3 FP | [card](cards/win_proc_lsass_dump_comsvcs.md) |
+| [Wbadmin backup or recovery naming NTDS](rules/frontline-pack/windows/win_proc_wbadmin_ntds_backup.yml) | T1003.003 | 3 TP / 3 FP | [card](cards/win_proc_wbadmin_ntds_backup.md) |
+| [Volume shadow copies deleted](rules/frontline-pack/windows/win_proc_shadow_copy_deletion.yml) | T1490 | 4 TP / 4 FP | [card](cards/win_proc_shadow_copy_deletion.md) |
+| [AWS console sign-in without MFA](rules/frontline-pack/cloudtrail/aws_console_login_without_mfa.yml) | T1078.004 | 2 TP / 3 FP | [card](cards/aws_console_login_without_mfa.md) |
 | [AWS CloudTrail logging stopped or trail deleted](rules/frontline-pack/cloudtrail/aws_cloudtrail_logging_disabled.yml) | T1685.002 | 3 TP / 4 FP | [card](cards/aws_cloudtrail_logging_disabled.md) |
 
-Each card covers the goal, ATT&CK mapping, log source, logic in plain English, known false
-positives, triage steps, and live test results. Cards are generated (`ringtail card rules/`)
-and CI fails if one is stale.
+Each card covers the goal, ATT&CK mapping, log source, logic in plain English, ready-to-paste
+Splunk and KQL queries, known false positives, triage steps (including the rule's coverage
+gaps), and live test results. Cards are generated (`ringtail card rules/`) and CI fails if
+one is stale.
 
 Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_positive.json`
 (every event must match) and `false_positive.json` (no event may match).
@@ -108,6 +132,7 @@ Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_posi
 - [ADR 0001: Test engine](docs/decisions/0001-test-engine.md)
 - [ADR 0002: Pinned ATT&CK index](docs/decisions/0002-pinned-attack-index.md)
 - [ADR 0003: Browser BYOK architecture](docs/decisions/0003-browser-byok-architecture.md)
+- [ADR 0004: SIEM query conversion](docs/decisions/0004-siem-conversion.md)
 
 ## License
 

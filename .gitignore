@@ -26,3 +26,6 @@ data/attack/enterprise-attack-*.json
 
 # AI drafts from `ringtail run`: review, then move into rules/ deliberately
 drafts/
+
+# Local launcher config for the Claude desktop app's browser pane
+.claude/launch.json
