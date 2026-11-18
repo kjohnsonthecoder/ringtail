@@ -8,7 +8,8 @@ Ringtail turns a plain-English behavior description or a threat report into a
 [Sigma](https://sigmahq.io) detection rule, maps it to MITRE ATT&CK, and **proves** the rule
 works by replaying sample logs: it must fire on the attack and stay quiet on benign activity.
 
-> Status: v0.1 in progress. All five commands work. Both Frontline Pack rules pass.
+> Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 in progress: the web backend is built
+> ([backend/](backend/README.md)); the BYOK web page is next.
 
 ## Pipeline
 
@@ -92,6 +93,7 @@ Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_posi
 
 - [ADR 0001: Test engine](docs/decisions/0001-test-engine.md)
 - [ADR 0002: Pinned ATT&CK index](docs/decisions/0002-pinned-attack-index.md)
+- [ADR 0003: Browser BYOK architecture](docs/decisions/0003-browser-byok-architecture.md)
 
 ## License
 
