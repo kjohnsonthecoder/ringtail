@@ -88,3 +88,8 @@ def test_icons_exist_at_declared_sizes():
 def test_description_fits_the_store_limit():
     assert len(MANIFEST["description"]) <= 132
     assert re.fullmatch(r"\d+\.\d+\.\d+", MANIFEST["version"])
+
+
+def test_manifest_version_matches_the_project():
+    m = re.search(r'^version\s*=\s*"([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.M)
+    assert MANIFEST["version"] == m.group(1)
