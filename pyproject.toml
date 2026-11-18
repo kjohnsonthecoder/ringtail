@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ringtail"
+version = "0.1.0.dev0"
+description = "Plain English in, rules that must fire out: Sigma rules drafted by AI, proven by tests."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Kevin Johnson" }]
+# pySigma 2.x needs google-re2 and PyYAML's C loader, which don't ship for 3.15 yet.
+# See docs/decisions/0001-test-engine.md.
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "pysigma>=2.0,<3",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+ringtail = "ringtail.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["core"]
+
+[tool.setuptools.package-data]
+ringtail = ["prompts/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
