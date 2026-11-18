@@ -85,8 +85,9 @@ ringtail/
 │   ├── card.py                  # detection card markdown
 │   └── convert.py               # Splunk SPL + our own KQL backend (ADR 0004)
 ├── backend/app.py               # FastAPI: /api/prompt, /api/check, /api/health; no key ever
-├── web/                         # static BYOK page (index.html, app.js, style.css)
-├── extension/                   # v0.3 (placeholder README until then)
+├── web/                         # static BYOK page; ringtail-client.js + ringtail-ui.js are shared with the extension
+├── extension/                   # v0.3 MV3 extension: manifest, background.js, sidepanel/, lib/ (synced copies), icons/
+├── scripts/                     # sync_extension.py (web → extension/lib), make_icons.py
 ├── data/attack/                 # pinned ATT&CK v20.1 index (+ version note, SHA-256)
 ├── rules/frontline-pack/{windows,cloudtrail}/<rule>.yml
 ├── tests/rules/<rule-id>/{true_positive,false_positive}.json
@@ -188,11 +189,11 @@ Decisions (Kevin, 2026-11-18; record in ADR 0005 before building):
   no remote code, update and store-review path.
 
 Definition of done for v0.3:
-- [ ] ADR 0005 and threat-model T7 written before code
+- [x] ADR 0005 and threat-model T7 written before code
 - [ ] Highlight → right-click → side panel produces a proven rule against the live backend
 - [ ] Key never reaches the Ringtail backend; extension requests no page access
-- [ ] Shared client module used by web and extension; CI checks the copies match
-- [ ] `node --test` unit tests for the shared loop in CI
+- [x] Shared client module used by web and extension; CI checks the copies match
+- [x] `node --test` unit tests for the shared loop in CI
 - [ ] Privacy policy published; store listing, icons, and screenshots ready
 - [ ] Extension zip attached to a GitHub release; README section with a screenshot
 - [ ] Submitted to the Chrome Web Store (Kevin submits; review time is Google's)

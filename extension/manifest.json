@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Ringtail: Highlight to Detect",
+  "short_name": "Ringtail",
+  "version": "0.3.0",
+  "description": "Highlight attacker behavior in a threat report and get a Sigma detection rule proven against sample logs. Bring your own key.",
+  "homepage_url": "https://github.com/kjohnsonthecoder/ringtail",
+  "minimum_chrome_version": "116",
+  "permissions": ["contextMenus", "sidePanel", "storage"],
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://web-production-34d65045.up.railway.app/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Ringtail",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ringtail</title>
+  <link rel="stylesheet" href="../lib/style.css">
+  <link rel="stylesheet" href="sidepanel.css">
+  <script type="module" src="sidepanel.js"></script>
+</head>
+<body>
+  <header class="site">
+    <h1>Ringtail</h1>
+    <p class="tagline">Highlight to detect.</p>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="key-h">
+      <h2 id="key-h">Your Anthropic API key</h2>
+      <label class="field">
+        <span class="label">API key</span>
+        <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-..." aria-describedby="key-note key-problem">
+      </label>
+      <div class="row">
+        <label class="field grow">
+          <span class="label">Model</span>
+          <input id="model" type="text" autocomplete="off" spellcheck="false" value="claude-opus-5-5">
+        </label>
+        <button id="forget" type="button" class="secondary">Forget key</button>
+      </div>
+      <div id="access-row" class="access" hidden>
+        <label class="field">
+          <span class="label">Access code for this Ringtail server</span>
+          <input id="access" type="password" autocomplete="off" spellcheck="false">
+        </label>
+      </div>
+      <p id="key-problem" class="problem" role="alert" hidden></p>
+      <p id="key-note" class="note">Kept in this browser session only (never on disk) and sent only to
+        <code>api.anthropic.com</code>, never to the Ringtail server. Use a separate key with a low
+        monthly spend limit.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="input-h">
+      <h2 id="input-h">What should it detect?</h2>
+      <label class="field">
+        <span class="label">Highlighted text (you can edit it)</span>
+        <textarea id="input" rows="8" spellcheck="true" placeholder="Highlight attacker behavior on any page, right-click, and choose &quot;Detect with Ringtail&quot;. Or type a behavior here."></textarea>
+      </label>
+      <p id="selection-note" class="note" hidden>New selection received. Nothing has been sent yet.</p>
+      <div class="row actions">
+        <button id="run" type="button" class="primary">Draft and prove a rule</button>
+        <button id="stop" type="button" class="secondary" hidden>Stop</button>
+      </div>
+      <p class="note">One rule per run. Add "Focus on: &lt;technique&gt;" to choose which behavior.</p>
+    </section>
+
+    <section id="progress-panel" class="panel" aria-labelledby="progress-h" hidden>
+      <h2 id="progress-h">Progress</h2>
+      <ol id="log" class="log" aria-live="polite"></ol>
+      <p id="usage" class="note"></p>
+    </section>
+
+    <section id="result-panel" class="panel" aria-labelledby="result-h" hidden>
+      <div class="result-head">
+        <h2 id="result-h">Proven rule</h2>
+        <span class="badge pass">PASS</span>
+      </div>
+      <p id="summary" class="summary"></p>
+      <div class="tabs" role="tablist" aria-label="Rule outputs">
+        <button type="button" role="tab" id="tab-rule" aria-controls="pane-rule" aria-selected="true">Rule</button>
+        <button type="button" role="tab" id="tab-siem" aria-controls="pane-siem" aria-selected="false" tabindex="-1">SIEM</button>
+        <button type="button" role="tab" id="tab-card" aria-controls="pane-card" aria-selected="false" tabindex="-1">Card</button>
+        <button type="button" role="tab" id="tab-tp" aria-controls="pane-tp" aria-selected="false" tabindex="-1">Fires</button>
+        <button type="button" role="tab" id="tab-fp" aria-controls="pane-fp" aria-selected="false" tabindex="-1">Quiet</button>
+      </div>
+      <div id="pane-rule" role="tabpanel" aria-labelledby="tab-rule" class="pane"><pre id="out-rule"></pre></div>
+      <div id="pane-siem" role="tabpanel" aria-labelledby="tab-siem" class="pane" hidden><div id="out-siem"></div></div>
+      <div id="pane-card" role="tabpanel" aria-labelledby="tab-card" class="pane" hidden><pre id="out-card"></pre></div>
+      <div id="pane-tp" role="tabpanel" aria-labelledby="tab-tp" class="pane" hidden><pre id="out-tp"></pre></div>
+      <div id="pane-fp" role="tabpanel" aria-labelledby="tab-fp" class="pane" hidden><pre id="out-fp"></pre></div>
+      <div class="row downloads">
+        <span class="label">Download:</span>
+        <button type="button" class="secondary small" data-download="rule">rule</button>
+        <button type="button" class="secondary small" data-download="tp">true_positive</button>
+        <button type="button" class="secondary small" data-download="fp">false_positive</button>
+        <button type="button" class="secondary small" data-download="notes">card notes</button>
+        <button type="button" class="secondary small" data-download="card">card</button>
+      </div>
+      <p class="note">An AI draft that passed Ringtail's checks, not a reviewed rule. Read it before using it.</p>
+    </section>
+
+    <details class="panel settings">
+      <summary>Settings: Ringtail server</summary>
+      <label class="field">
+        <span class="label">Server URL</span>
+        <input id="backend" type="url" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="row actions">
+        <button id="save-backend" type="button" class="secondary">Save</button>
+        <button id="reset-backend" type="button" class="secondary">Use default</button>
+      </div>
+      <p id="backend-status" class="note" role="status"></p>
+      <p class="note">The server builds prompts and runs the checks; it never receives your key.
+        A self-hosted server asks for permission to reach that one address.</p>
+    </details>
+  </main>
+</body>
+</html>
