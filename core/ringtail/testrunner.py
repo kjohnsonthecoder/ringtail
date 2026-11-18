@@ -89,6 +89,27 @@ def _load_events(path: Path) -> list[dict]:
     return data
 
 
+def replay(compiled: CompiledRule, kind: str, events: list[dict], report: RuleReport) -> None:
+    """Replay in-memory events, appending one CaseResult (or error) per event."""
+    expected = kind == "true_positive"
+    for i, event in enumerate(events):
+        try:
+            res = compiled.match(event)
+        except UnsupportedSigmaFeature as e:
+            report.errors.append(f"{kind}[{i}]: matcher does not support {e}")
+            continue
+        report.cases.append(
+            CaseResult(
+                kind=kind,
+                index=i,
+                expected=expected,
+                actual=res.matched,
+                detections=res.detections,
+                comment=str(event.get("_comment", "")),
+            )
+        )
+
+
 def run_rule_tests(rule_path: Path, tests_root: Path | None = None) -> RuleReport:
     rule_path = Path(rule_path)
     tests_dir = find_tests_dir(rule_path, tests_root)
@@ -113,22 +134,7 @@ def run_rule_tests(rule_path: Path, tests_root: Path | None = None) -> RuleRepor
         if not events:
             report.errors.append(f"{path.as_posix()} has no events")
             continue
-        for i, event in enumerate(events):
-            try:
-                res = compiled.match(event)
-            except UnsupportedSigmaFeature as e:
-                report.errors.append(f"{kind}[{i}]: matcher does not support {e}")
-                continue
-            report.cases.append(
-                CaseResult(
-                    kind=kind,
-                    index=i,
-                    expected=expected,
-                    actual=res.matched,
-                    detections=res.detections,
-                    comment=str(event.get("_comment", "")),
-                )
-            )
+        replay(compiled, kind, events, report)
     return report
 
 

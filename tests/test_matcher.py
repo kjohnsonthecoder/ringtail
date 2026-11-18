@@ -61,6 +61,14 @@ def test_base64offset():
     assert not hits(r, {"CommandLine": "x aGVsbG8="})
 
 
+def test_wide_base64offset_finds_utf16_encoded_powershell():
+    r = rule("sel:\n  CommandLine|wide|base64offset|contains: 'IEX'\ncondition: sel")
+    import base64
+    payload = base64.b64encode("x IEX (y)".encode("utf-16-le")).decode()
+    assert hits(r, {"CommandLine": f"powershell -enc {payload}"})
+    assert not hits(r, {"CommandLine": "powershell -enc AAAA"})
+
+
 def test_regex():
     r = rule("sel:\n  f|re: '^ab\\d+$'\ncondition: sel")
     assert hits(r, {"f": "ab123"})
@@ -107,7 +115,7 @@ def test_condition_logic_and_detection_breakdown():
     assert r.match({"a": 1, "b": 2}).matched
 
 
-def test_unsupported_feature_fails_loud():
-    r = rule("sel:\n  a|fieldref: b\ncondition: sel")
-    with pytest.raises(UnsupportedSigmaFeature):
-        r.match({"a": "x", "b": "x"})
+def test_unsupported_feature_fails_loud_at_compile_time():
+    # Even when the event lacks the field (which would otherwise read as "no match").
+    with pytest.raises(UnsupportedSigmaFeature, match="SigmaFieldReference"):
+        rule("sel:\n  a|fieldref: b\ncondition: sel")

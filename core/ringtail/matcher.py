@@ -222,6 +222,31 @@ def _eval(node: Any, event: dict) -> bool:
     raise UnsupportedSigmaFeature(f"condition node {type(node).__name__}")
 
 
+_SUPPORTED_VALUES = (
+    SigmaString, SigmaRegularExpression, SigmaBool, SigmaNumber, SigmaCompareExpression,
+    SigmaCIDRExpression, SigmaExists, SigmaNull,
+)
+
+
+def _check_supported(value: Any) -> None:
+    if isinstance(value, SigmaExpansion):
+        for v in value.values:
+            _check_supported(v)
+        return
+    if not isinstance(value, _SUPPORTED_VALUES):
+        raise UnsupportedSigmaFeature(f"value type {type(value).__name__}")
+    if isinstance(value, SigmaString):
+        _string_regex(tuple(value.s), isinstance(value, SigmaCasedString))  # raises on placeholders
+
+
+def _leaves(node: Any) -> Iterator[Any]:
+    if isinstance(node, (ConditionAND, ConditionOR, ConditionNOT)):
+        for a in node.args:
+            yield from _leaves(a)
+    elif isinstance(node, (ConditionFieldEqualsValueExpression, ConditionValueExpression)):
+        yield node
+
+
 class CompiledRule:
     """A Sigma rule parsed once and ready to evaluate against many events."""
 
@@ -236,9 +261,22 @@ class CompiledRule:
             for name in rule.detection.detections
         }
 
+        # Every field/keyword test in the rule, for near-miss checks on benign samples.
+        self._leaves = [leaf for c in self._conditions for leaf in _leaves(c)]
+        # Fail loud up front: an unsupported value must not hide behind a missing field
+        # (which would otherwise quietly evaluate to "no match").
+        for leaf in self._leaves:
+            _check_supported(leaf.value)
+
     @classmethod
     def from_yaml(cls, text: str) -> "CompiledRule":
         return cls(SigmaRule.from_yaml(text))
+
+    def leaf_hits(self, event: dict) -> int:
+        """How many individual field conditions this event satisfies (ignoring the
+        condition logic). A benign event with hits > 0 that still doesn't match is a
+        near miss: the rule's logic, not unrelated data, is what rejects it."""
+        return sum(_eval(leaf, event) for leaf in self._leaves)
 
     def match(self, event: dict) -> MatchResult:
         # Multiple conditions in one rule are OR'd (Sigma spec).
