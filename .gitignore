@@ -19,3 +19,7 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Full ATT&CK STIX bundles: large, rebuilt into a committed index (see data/attack/README.md)
+data/attack/enterprise-attack-*.json
+!data/attack/*.index.json
