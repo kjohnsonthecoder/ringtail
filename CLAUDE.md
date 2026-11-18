@@ -11,6 +11,8 @@ This is a portfolio project for SOC / detection engineering / IR roles, not a pr
 Origin nod: the built-in rule set is called the **Frontline Pack** (Kevin's company,
 Frontline Consultant, is where this started).
 
+Live: <https://web-production-34d65045.up.railway.app> · Latest release: v0.2.0.
+
 ---
 
 ## Core principles (do not violate)
@@ -19,8 +21,8 @@ Frontline Consultant, is where this started).
    validates syntax, verifies ATT&CK IDs, and runs tests. A rule is never "done" because
    the model said so — only because the checks pass.
 2. **BYOK — bring your own key.** Ringtail never ships, stores, or proxies a shared API
-   key. The CLI reads `ANTHROPIC_API_KEY` from the user's environment. Later, the web page
-   and browser extension will call Claude directly from the user's browser; the backend
+   key. The CLI reads `ANTHROPIC_API_KEY` from the user's environment. The web page (and
+   the v0.3 browser extension) call Claude directly from the user's browser; the backend
    never sees a key. Never log keys, never write them to disk, never commit them.
 3. **Threat reports are hostile input.** Pasted/scraped text may contain prompt injection.
    Strip to plain text, wrap it clearly as data in the prompt, require structured JSON
@@ -29,19 +31,18 @@ Frontline Consultant, is where this started).
 
 ---
 
-## Scope for v0.1 (build this now)
+## Status
 
-In scope:
-- `core/` Python library: prompt → draft → validate → test, with a retry loop.
-- `ringtail` CLI.
-- Two Frontline Pack rules with passing tests.
-- GitHub Action that runs all rule tests on every push/PR.
-- README with quickstart, the pipeline diagram (Mermaid), and a test-pass badge.
+| Version | Scope | State |
+|---|---|---|
+| v0.1 | `core/` library, `ringtail` CLI, first Frontline Pack rules, CI, README | Done |
+| v0.2 | BYOK web page, stateless FastAPI backend, Railway deploy | Done, released as v0.2.0 |
+| v0.2.0 extras | Frontline Pack grown to 8 rules; Splunk SPL + Microsoft KQL conversion | Done |
+| v0.3 | Browser extension "Highlight to Detect" | **Next** (plan below) |
+| Later | Replay public datasets (OTRF, EVTX-ATTACK-SAMPLES); RSigma as a second CI engine | Not started |
 
-Out of scope until v0.1 works end-to-end (do NOT start these):
-- Web page, FastAPI backend, Railway deploy (v0.2)
-- Browser extension "Highlight to Detect" (v0.3)
-- SIEM conversion beyond what pySigma gives for free
+Design decisions live in `docs/decisions/` (ADRs 0001–0004). Read the relevant ADR before
+changing that area; write a new ADR for any new architectural choice.
 
 ---
 
@@ -49,12 +50,16 @@ Out of scope until v0.1 works end-to-end (do NOT start these):
 
 ```
 input text ─► [AI] extract behavior (TTPs, log source, key fields)
-           ─► [AI] draft Sigma YAML + ATT&CK tags
+           ─► [AI] draft Sigma YAML + ATT&CK tags + TP/FP samples + card notes
            ─► [code] validate: pySigma parse/lint + ATT&CK IDs exist & not revoked/deprecated
-           ─► [code] test: replay true-positive and false-positive sample events
-           ─► pass  → write rule + tests + detection card
+           ─► [code] test: replay true-positive and false-positive sample events + guardrails
+           ─► pass  → rule + tests + detection card (+ Splunk/KQL queries)
               fail  → send the exact error back to the AI, retry (max 3), then stop and report
 ```
+
+Where the loop runs: in the CLI (`ringtail run`) the whole loop is local. On the web page
+the loop runs in the browser (it holds the key) and the backend builds prompts and runs
+every check (ADR 0003). The extension will work the same way as the web page.
 
 ---
 
@@ -62,54 +67,50 @@ input text ─► [AI] extract behavior (TTPs, log source, key fields)
 
 ```
 ringtail/
-├── CLAUDE.md
-├── README.md
-├── LICENSE                      # MIT
-├── pyproject.toml
+├── CLAUDE.md · README.md · CHANGELOG.md · LICENSE (MIT)
+├── pyproject.toml               # extras: [web] fastapi+uvicorn, [dev] pytest+httpx
+├── Dockerfile · railway.json    # Railway deploy of backend + web
 ├── .env.example                 # ANTHROPIC_API_KEY=, RINGTAIL_MODEL=
 ├── core/ringtail/
-│   ├── cli.py                   # Typer app: draft, validate, test, run
+│   ├── cli.py                   # Typer: draft, run, validate, test, card, convert
+│   ├── config.py                # default model, max attempts, key hygiene (never echoes keys)
 │   ├── llm.py                   # Anthropic SDK calls, structured JSON output
 │   ├── prompts/                 # prompt templates (versioned, plain files)
+│   ├── sanitize.py              # hostile input → plain text, wrapped as data
+│   ├── pipeline.py              # the run loop, draft checks, guardrails
+│   ├── service.py               # build_prompt / check as JSON calls (used by the backend)
 │   ├── validate.py              # pySigma + ATT&CK checks
-│   ├── attack.py                # load pinned ATT&CK STIX bundle, lookup IDs
-│   ├── testrunner.py            # replay sample events against a rule
-│   └── card.py                  # render detection card markdown
-├── data/attack/                 # pinned enterprise-attack STIX JSON (+ version note)
-├── rules/frontline-pack/
-│   ├── windows/<rule>.yml
-│   └── cloudtrail/<rule>.yml
-├── tests/rules/<rule-id>/
-│   ├── true_positive.json       # must match
-│   └── false_positive.json      # must NOT match
-├── cards/<rule-id>.md           # detection card per rule
-├── docs/
-│   ├── threat-model.md
-│   └── decisions/               # short ADRs, e.g. 0001-test-engine.md
-├── tests/                       # pytest for the core library
+│   ├── attack.py                # pinned ATT&CK index lookups
+│   ├── matcher.py · testrunner.py   # the test engine (ADR 0001)
+│   ├── card.py                  # detection card markdown
+│   └── convert.py               # Splunk SPL + our own KQL backend (ADR 0004)
+├── backend/app.py               # FastAPI: /api/prompt, /api/check, /api/health; no key ever
+├── web/                         # static BYOK page (index.html, app.js, style.css)
+├── extension/                   # v0.3 (placeholder README until then)
+├── data/attack/                 # pinned ATT&CK v20.1 index (+ version note, SHA-256)
+├── rules/frontline-pack/{windows,cloudtrail}/<rule>.yml
+├── tests/rules/<rule-id>/{true_positive,false_positive}.json
+├── cards/<rule-id>.yml (human notes) · cards/<rule-id>.md (generated)
+├── docs/threat-model.md · docs/decisions/ · docs/images/
+├── tests/                       # pytest for the library and backend
 └── .github/workflows/test.yml
 ```
-
-Placeholders for later (create empty dirs with a README line only): `backend/`, `web/`, `extension/`.
 
 ---
 
 ## Stack
 
-- Python 3.11+, `pyproject.toml`, Typer for the CLI, pytest.
-- `pySigma` for parsing/validation (and later backend conversion to KQL/SPL).
-- Anthropic Python SDK. Model is configurable via `RINGTAIL_MODEL`; pick a current
-  Claude model as the default and keep it in one place.
-- ATT&CK: MITRE's `enterprise-attack` STIX bundle, pinned to a specific version in
-  `data/attack/`. Reject unknown, revoked, or deprecated technique IDs.
-
-**Test engine — decide first, record an ADR.** Evaluate and pick the simplest option
-that runs in GitHub Actions without heavy setup:
-- RSigma (Rust toolkit; has corpus backtesting with per-rule expectations and
-  JUnit/JSON output, and can explain why a rule did or didn't match)
-- Zircolite (Python; Sigma over JSON/EVTX via SQLite)
-- A minimal pySigma-based matcher over JSON events (fallback)
-Write the choice and reasoning in `docs/decisions/0001-test-engine.md`.
+- Python 3.11–3.13 (pySigma doesn't support 3.15 yet), `pyproject.toml`, Typer, pytest.
+- `pySigma` 2.x for parsing/validation; our own matcher as the test engine (ADR 0001).
+- `pysigma-backend-splunk` 3.0.x for SPL; KQL via our own `KustoBackend` (ADR 0004).
+  The backend is pinned to a minor version because cards embed its output.
+- Anthropic Python SDK in the CLI; direct `fetch` from the browser on the web page.
+  Default model lives in one place: `core/ringtail/config.py` (`RINGTAIL_MODEL` overrides).
+- FastAPI + uvicorn for the backend; plain HTML/CSS/JS for the page (no framework, no
+  third-party scripts, strict CSP).
+- ATT&CK: MITRE `enterprise-attack` pinned to **v20.1** as a committed index (ADR 0002).
+  Reject unknown, revoked, or deprecated technique IDs.
+- Hosting: Railway, deployed from `main` on every push.
 
 ---
 
@@ -117,10 +118,11 @@ Write the choice and reasoning in `docs/decisions/0001-test-engine.md`.
 
 ```
 ringtail draft "<behavior text>" | --file report.txt   # AI draft only, prints YAML
-ringtail validate <rule.yml>                            # pySigma + ATT&CK checks
-ringtail test <rule.yml>                                # replay TP/FP events
-ringtail run "<text>" | --file report.txt               # full loop with retries;
-                                                        # writes rule, tests, card
+ringtail run "<text>" | --file report.txt               # full loop; writes to drafts/
+ringtail validate <rules>                               # pySigma + ATT&CK checks
+ringtail test <rules>                                   # replay TP/FP events
+ringtail card <rules> [--check]                         # generate cards / check freshness
+ringtail convert <rules> [-t splunk|kql]                # SIEM queries
 ```
 
 Exit codes: 0 = pass, 1 = validation/test failure, 2 = usage/config error
@@ -128,45 +130,63 @@ Exit codes: 0 = pass, 1 = validation/test failure, 2 = usage/config error
 
 ---
 
-## First two Frontline Pack rules (weekend 1)
+## Frontline Pack (8 rules)
 
-1. **Windows process creation — encoded PowerShell** (ATT&CK T1059.001).
-   TP: `powershell.exe -enc <base64>`; FP: normal admin PowerShell with no encoding.
-2. **AWS CloudTrail — CloudTrail logging stopped or trail deleted** (ATT&CK T1685.002,
-   Defense Impairment; formerly T1562.008, revoked in ATT&CK v20).
-   TP: `StopLogging` / `DeleteTrail` event; FP: `DescribeTrails` / `GetTrailStatus`.
+Encoded PowerShell (T1059.001) · nltest trust discovery (T1482) · RustDesk service install
+(T1219.002, T1543.003) · LSASS dump via comsvcs (T1003.001) · wbadmin NTDS backup
+(T1003.003) · shadow copy deletion (T1490) · AWS console login without MFA (T1078.004) ·
+CloudTrail logging stopped (T1685.002; formerly T1562.008, revoked in ATT&CK v20).
 
-ATT&CK is pinned to **v20.1** (`data/attack/`). Technique IDs in this brief must pass
-`ringtail validate`; if a future ATT&CK upgrade revokes one, the validator names the
-replacement. See `docs/decisions/0002-pinned-attack-index.md`.
-
-Hand-write small, realistic JSON sample events for tests (no real customer data, no
-real account IDs/keys — use obvious placeholders). Larger public datasets
-(OTRF Security-Datasets, EVTX-ATTACK-SAMPLES, Atomic Red Team output) come later.
+Rules for adding one:
+- Technique IDs must pass `ringtail validate` against pinned v20.1.
+- Hand-write small, realistic JSON samples (no real customer data, accounts, or keys —
+  obvious placeholders like `EXAMPLE`, `111122223333`, TEST-NET IPs). Benign samples should
+  be near misses where possible; label any that aren't as "Out of scope" honestly.
+- Write `cards/<rule-id>.yml` (goal, summary, triage, including the rule's coverage gaps),
+  then `ringtail card rules/`. CI fails on a stale card.
+- Use Write/Edit for files with backslashes; shell heredocs mangle them in this environment.
 
 ## Detection card (one per rule, `cards/<rule-id>.md`)
 
-Goal · ATT&CK technique(s) · Log source · Detection logic in plain English ·
+Goal · ATT&CK technique(s) · Log source · Detection logic in plain English · SIEM queries ·
 Known false positives · Triage steps · Test results (TP/FP pass) · References
 
 ---
 
 ## GitHub Action
 
-`.github/workflows/test.yml`: on push and pull_request → set up Python → install →
-run `pytest` and `ringtail test` over every rule in `rules/`. No API key needed in CI:
-CI only validates and tests committed rules; it never calls the LLM.
+`.github/workflows/test.yml` on push and pull_request: install → `pytest` →
+`ringtail validate rules/` → `ringtail test rules/` → `ringtail card rules/ --check` →
+`ringtail convert rules/`. No API key in CI: it never calls the LLM.
 
 ---
 
-## Definition of done for v0.1
+## v0.3 plan: browser extension "Highlight to Detect"
 
-- [ ] `ringtail run "detect encoded powershell"` produces a rule that validates and passes tests
-- [ ] Both Frontline Pack rules committed with TP/FP tests and cards
-- [ ] GitHub Action green on `main`; badge in README
-- [ ] `docs/threat-model.md` covers prompt injection, BYOK, and untrusted AI output
-- [ ] ADR for the test engine
-- [ ] README quickstart works from a fresh clone with only `ANTHROPIC_API_KEY` set
+Highlight text in a threat report on any site → right-click "Detect with Ringtail" → a side
+panel runs the same loop as the web page → a proven rule with cards and SIEM queries.
+
+Design intent (to be confirmed and recorded in ADR 0005 before building):
+- Chrome/Edge Manifest V3. The selected text comes from the context-menu click itself, so
+  **no content scripts and no access to page content**. Permissions: `contextMenus`,
+  `sidePanel`, `storage`; host access only to `api.anthropic.com` and the Ringtail backend.
+- Same split as the web page: the side panel holds the key and calls Claude; the backend
+  builds prompts and runs checks. Key handling and backend choice are open decisions.
+- Share the loop code with `web/app.js` instead of copying it; MV3 forbids remote code, so
+  the extension ships its own copy and CI checks it matches.
+- Threat model section T7 (extension): permissions, key storage, hostile page selections,
+  no remote code, update and store-review path.
+- Distribution starts as "load unpacked" plus a zip on the GitHub release. Publishing to
+  the Chrome Web Store needs Kevin's yes and his developer account.
+
+Definition of done for v0.3:
+- [ ] ADR 0005 and threat-model T7 written before code
+- [ ] Highlight → right-click → side panel produces a proven rule against the live backend
+- [ ] Key never reaches the Ringtail backend; extension requests no page access
+- [ ] Shared client code with a CI check that the web and extension copies match
+- [ ] Extension zip attached to a GitHub release; README section with a screenshot
+
+---
 
 ## Working agreements
 
