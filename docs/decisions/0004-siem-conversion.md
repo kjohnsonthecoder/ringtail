@@ -43,8 +43,9 @@ flowchart LR
 
 - `core/ringtail/convert.py` holds both. `convert_rule(text)` returns one result per target:
   a query plus the schema it assumes, or an error explaining what isn't mapped.
-- **KQL mappings are explicit and short**: Windows process creation goes to Defender XDR
-  `DeviceProcessEvents`, the Windows System log to Sentinel's `Event` table, and
+- **KQL mappings are explicit and short**: Windows and Linux process creation go to
+  Defender `DeviceProcessEvents` (added for Linux in v0.3, after the first extension run
+  produced a Linux rule), the Windows System log to Sentinel's `Event` table, and
   CloudTrail to Sentinel's `AWSCloudTrail` table. A rule using an unmapped log source or
   field gets "not available" with the reason. A query with a wrong field name returns
   nothing in the SIEM, which looks exactly like "no attacks", so a guessed mapping is

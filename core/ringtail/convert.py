@@ -156,6 +156,20 @@ _KQL_SOURCES: dict[tuple[str | None, str | None, str | None], tuple[str, str, di
             "Computer": "DeviceName",
         },
     ),
+    # Defender for Endpoint on Linux writes to the same table with the same columns.
+    # (No OriginalFileName: Linux binaries have no PE version info.)
+    ("linux", "process_creation", None): (
+        "DeviceProcessEvents",
+        "Defender for Endpoint on Linux, DeviceProcessEvents (also in Sentinel with the Defender XDR connector)",
+        {
+            "Image": "FolderPath",
+            "CommandLine": "ProcessCommandLine",
+            "ParentImage": "InitiatingProcessFolderPath",
+            "ParentCommandLine": "InitiatingProcessCommandLine",
+            "User": "AccountName",
+            "Computer": "DeviceName",
+        },
+    ),
     ("windows", None, "system"): (
         "Event",
         "Sentinel Event table (Windows System log collected by the Azure Monitor Agent)",
@@ -256,6 +270,9 @@ def _to_splunk(rule: SigmaRule, text: str) -> Conversion:
         pipeline = splunk_windows_pipeline()
         c.schema = ("Windows event and Sysmon field names (Splunk Add-on for Microsoft Windows / Sysmon)"
                     if ls.category == "process_creation" else "Windows event log field names")
+    elif ls.product == "linux" and ls.category == "process_creation":
+        pipeline = ProcessingPipeline()
+        c.schema = "Sysmon for Linux process field names (Image, CommandLine, ParentImage)"
     elif ls.product == "aws" and ls.service == "cloudtrail":
         pipeline = ProcessingPipeline()
         prefix = 'sourcetype="aws:cloudtrail" '
