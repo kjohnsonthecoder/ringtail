@@ -1,0 +1,31 @@
+title: AWS CloudTrail Logging Stopped or Trail Deleted
+id: dbd4ecdb-8720-4de6-8145-fb01824391be
+status: experimental
+description: |
+  Detects StopLogging or DeleteTrail calls against AWS CloudTrail. Turning off or deleting a
+  trail blinds the audit log, so attackers often do it right after gaining access and before
+  acting. Failed attempts (errorCode such as AccessDenied) are included on purpose: someone
+  trying to stop logging is worth a look even if the call was blocked.
+references:
+  - https://attack.mitre.org/techniques/T1562/008/
+  - https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html
+  - https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_DeleteTrail.html
+author: Kevin Johnson (Ringtail Frontline Pack)
+date: 2026-11-17
+tags:
+  - attack.defense-evasion
+  - attack.t1562.008
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: cloudtrail.amazonaws.com
+    eventName:
+      - StopLogging
+      - DeleteTrail
+  condition: selection
+falsepositives:
+  - Planned trail changes, such as consolidating to an organization trail or decommissioning an account
+  - Infrastructure-as-code teardown (Terraform destroy, CloudFormation stack delete) in sandbox accounts
+level: high

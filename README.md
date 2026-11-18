@@ -8,7 +8,7 @@ Ringtail turns a plain-English behavior description or a threat report into a
 [Sigma](https://sigmahq.io) detection rule, maps it to MITRE ATT&CK, and **proves** the rule
 works by replaying sample logs: it must fire on the attack and stay quiet on benign activity.
 
-> Status: v0.1 in progress. The test engine and the first Frontline Pack rule work today.
+> Status: v0.1 in progress. The test engine and both Frontline Pack rules work today.
 > `draft`, `validate`, and `run` are next.
 
 ## Pipeline
@@ -45,6 +45,7 @@ pytest
 | Rule | ATT&CK | Tests |
 |---|---|---|
 | [PowerShell launched with an encoded command](rules/frontline-pack/windows/win_proc_encoded_powershell.yml) | T1059.001 | 4 TP / 3 FP |
+| [AWS CloudTrail logging stopped or trail deleted](rules/frontline-pack/cloudtrail/aws_cloudtrail_logging_disabled.yml) | T1562.008 | 3 TP / 4 FP |
 
 Each rule `rules/**/<rule-id>.yml` is tested by `tests/rules/<rule-id>/true_positive.json`
 (every event must match) and `false_positive.json` (no event may match).

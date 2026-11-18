@@ -1,0 +1,94 @@
+[
+  {
+    "_comment": "StopLogging by an IAM user with long-term access keys, from a CLI client.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER",
+      "arn": "arn:aws:iam::111122223333:user/example-dev",
+      "accountId": "111122223333",
+      "accessKeyId": "AKIAEXAMPLEPLACEHOLDER",
+      "userName": "example-dev"
+    },
+    "eventTime": "2026-11-17T03:12:44Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "StopLogging",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "203.0.113.45",
+    "userAgent": "aws-cli/2.17.0 Python/3.12.0 Linux/6.8 exe/x86_64",
+    "requestParameters": {
+      "name": "arn:aws:cloudtrail:us-east-1:111122223333:trail/management-events"
+    },
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000001",
+    "eventID": "00000000-0000-4000-8000-0000000000a1",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  },
+  {
+    "_comment": "DeleteTrail by an assumed role, the same call a compromised CI role would make.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "AssumedRole",
+      "principalId": "AROAEXAMPLEPLACEHOLDER:session-placeholder",
+      "arn": "arn:aws:sts::111122223333:assumed-role/example-deploy-role/session-placeholder",
+      "accountId": "111122223333",
+      "sessionContext": {
+        "sessionIssuer": {
+          "type": "Role",
+          "arn": "arn:aws:iam::111122223333:role/example-deploy-role",
+          "userName": "example-deploy-role"
+        }
+      }
+    },
+    "eventTime": "2026-11-17T03:14:02Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "DeleteTrail",
+    "awsRegion": "us-west-2",
+    "sourceIPAddress": "198.51.100.23",
+    "userAgent": "Boto3/1.35.0 Python/3.12.0",
+    "requestParameters": {
+      "name": "management-events"
+    },
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000002",
+    "eventID": "00000000-0000-4000-8000-0000000000a2",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  },
+  {
+    "_comment": "StopLogging attempt blocked by permissions. Still fires: the attempt itself matters.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER2",
+      "arn": "arn:aws:iam::111122223333:user/example-intern",
+      "accountId": "111122223333",
+      "accessKeyId": "AKIAEXAMPLEPLACEHOLDER2",
+      "userName": "example-intern"
+    },
+    "eventTime": "2026-11-17T03:20:10Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "StopLogging",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "203.0.113.77",
+    "userAgent": "aws-cli/2.17.0 Python/3.12.0 Windows/11 exe/AMD64",
+    "errorCode": "AccessDenied",
+    "errorMessage": "User is not authorized to perform: cloudtrail:StopLogging",
+    "requestParameters": null,
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000003",
+    "eventID": "00000000-0000-4000-8000-0000000000a3",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  }
+]

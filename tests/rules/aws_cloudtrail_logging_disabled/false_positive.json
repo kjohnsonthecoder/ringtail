@@ -1,0 +1,113 @@
+[
+  {
+    "_comment": "Read-only inventory: DescribeTrails from a security audit role.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "AssumedRole",
+      "principalId": "AROAEXAMPLEPLACEHOLDER:audit-session",
+      "arn": "arn:aws:sts::111122223333:assumed-role/example-audit-role/audit-session",
+      "accountId": "111122223333"
+    },
+    "eventTime": "2026-11-17T08:00:01Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "DescribeTrails",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "securityhub.amazonaws.com",
+    "userAgent": "securityhub.amazonaws.com",
+    "requestParameters": {
+      "includeShadowTrails": true
+    },
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000011",
+    "eventID": "00000000-0000-4000-8000-0000000000b1",
+    "readOnly": true,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  },
+  {
+    "_comment": "Health check: GetTrailStatus, the call monitoring tools make to confirm logging is ON.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER",
+      "arn": "arn:aws:iam::111122223333:user/example-dev",
+      "accountId": "111122223333",
+      "userName": "example-dev"
+    },
+    "eventTime": "2026-11-17T08:05:30Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "GetTrailStatus",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "203.0.113.45",
+    "userAgent": "aws-cli/2.17.0 Python/3.12.0 Linux/6.8 exe/x86_64",
+    "requestParameters": {
+      "name": "arn:aws:cloudtrail:us-east-1:111122223333:trail/management-events"
+    },
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000012",
+    "eventID": "00000000-0000-4000-8000-0000000000b2",
+    "readOnly": true,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  },
+  {
+    "_comment": "StartLogging turns logging back ON. Similar name, opposite meaning: must not fire.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER3",
+      "arn": "arn:aws:iam::111122223333:user/example-admin",
+      "accountId": "111122223333",
+      "userName": "example-admin"
+    },
+    "eventTime": "2026-11-17T08:30:00Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "StartLogging",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "203.0.113.10",
+    "userAgent": "AWS Internal",
+    "requestParameters": {
+      "name": "arn:aws:cloudtrail:us-east-1:111122223333:trail/management-events"
+    },
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000013",
+    "eventID": "00000000-0000-4000-8000-0000000000b3",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  },
+  {
+    "_comment": "Unrelated write/delete call on another service (S3). Rule must stay scoped to CloudTrail trail changes.",
+    "eventVersion": "1.09",
+    "userIdentity": {
+      "type": "IAMUser",
+      "principalId": "AIDAEXAMPLEPLACEHOLDER",
+      "arn": "arn:aws:iam::111122223333:user/example-dev",
+      "accountId": "111122223333",
+      "userName": "example-dev"
+    },
+    "eventTime": "2026-11-17T09:00:00Z",
+    "eventSource": "s3.amazonaws.com",
+    "eventName": "DeleteBucketPolicy",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "203.0.113.45",
+    "userAgent": "aws-cli/2.17.0 Python/3.12.0 Linux/6.8 exe/x86_64",
+    "requestParameters": {
+      "bucketName": "example-placeholder-bucket"
+    },
+    "responseElements": null,
+    "requestID": "00000000-0000-4000-8000-000000000014",
+    "eventID": "00000000-0000-4000-8000-0000000000b4",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "managementEvent": true,
+    "recipientAccountId": "111122223333",
+    "eventCategory": "Management"
+  }
+]
