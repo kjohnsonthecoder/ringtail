@@ -119,3 +119,12 @@ def test_card_escapes_html_from_model_notes_but_not_code_spans():
     assert "<img" not in md and "<script>" not in md
     assert "&lt;img src=x onerror=alert(1)&gt; catch it" in md
     assert "`<trail>`" in md
+
+
+def test_check_returns_siem_queries():
+    r = service.check({"draft": GOOD_DRAFT}, today=TODAY)["result"]
+    by_target = {q["target"]: q for q in r["queries"]}
+    assert set(by_target) == {"splunk", "kql"}
+    assert by_target["kql"]["query"].startswith("DeviceProcessEvents")
+    assert "certutil" in by_target["splunk"]["query"].lower()
+    assert "## SIEM queries" in r["card_markdown"]

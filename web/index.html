@@ -57,8 +57,21 @@
       <h2 id="input-h">2. What should it detect?</h2>
       <label class="field">
         <span class="label">Behavior description or threat report (plain text or pasted HTML)</span>
-        <textarea id="input" rows="7" spellcheck="true" placeholder="e.g. detect encoded powershell"></textarea>
+        <textarea id="input" rows="7" spellcheck="true" placeholder="e.g. detect encoded powershell" aria-describedby="paste-hint"></textarea>
       </label>
+      <details id="paste-hint" class="hint">
+        <summary>What can I paste here?</summary>
+        <ul>
+          <li><strong>What an attacker did</strong>, in your words: "detect vssadmin deleting shadow copies".
+            Naming the process, flag, or cloud event helps.</li>
+          <li><strong>A threat report</strong> or advisory section, as text or HTML. Ringtail picks the strongest
+            behavior. One rule per run: add "Focus on: &lt;technique&gt;" to choose which.</li>
+          <li><strong>A command line you saw</strong>, with real hostnames and usernames swapped for placeholders.</li>
+        </ul>
+        <p><strong>Not a good fit:</strong> lists of hashes, IPs, or domains. Those change every campaign and
+          belong in a blocklist; Sigma rules detect behavior. Ringtail doesn't fetch URLs, so paste the text.
+          Don't paste secrets, client data, or reports you can't share (TLP:RED, NDA).</p>
+      </details>
       <div class="row examples">
         <span class="label">Try:</span>
         <button type="button" class="chip" data-example="detect encoded powershell">Encoded PowerShell</button>
@@ -91,11 +104,17 @@
         <button type="button" role="tab" id="tab-card" aria-controls="pane-card" aria-selected="false" tabindex="-1">Detection card</button>
         <button type="button" role="tab" id="tab-tp" aria-controls="pane-tp" aria-selected="false" tabindex="-1">Should fire</button>
         <button type="button" role="tab" id="tab-fp" aria-controls="pane-fp" aria-selected="false" tabindex="-1">Should not fire</button>
+        <button type="button" role="tab" id="tab-siem" aria-controls="pane-siem" aria-selected="false" tabindex="-1">SIEM queries</button>
       </div>
       <div id="pane-rule" role="tabpanel" aria-labelledby="tab-rule" class="pane"><pre id="out-rule"></pre></div>
       <div id="pane-card" role="tabpanel" aria-labelledby="tab-card" class="pane" hidden><pre id="out-card"></pre></div>
       <div id="pane-tp" role="tabpanel" aria-labelledby="tab-tp" class="pane" hidden><pre id="out-tp"></pre></div>
       <div id="pane-fp" role="tabpanel" aria-labelledby="tab-fp" class="pane" hidden><pre id="out-fp"></pre></div>
+      <div id="pane-siem" role="tabpanel" aria-labelledby="tab-siem" class="pane" hidden>
+        <div id="out-siem"></div>
+        <p class="note">Generated from the rule. Field names assume the schema shown for each query;
+          check them against your own data before deploying.</p>
+      </div>
       <div class="row downloads">
         <span class="label">Download:</span>
         <button type="button" class="secondary" data-download="rule">rule .yml</button>

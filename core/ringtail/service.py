@@ -22,6 +22,7 @@ import yaml
 from ringtail import config
 from ringtail.attack import AttackIndex, default_index
 from ringtail.card import render_card_text
+from ringtail.convert import convert_rule
 from ringtail.llm import LLMError
 from ringtail.pipeline import (
     CARD_NOTES_HEADER,
@@ -140,6 +141,7 @@ def check(req: Any, index: AttackIndex | None = None, today: dt.date | None = No
             "card_notes_yaml": CARD_NOTES_HEADER + yaml.safe_dump(
                 candidate.card.to_dict(), sort_keys=False, allow_unicode=True, width=100),
             "card_markdown": card_md,
+            "queries": [c.to_dict() for c in convert_rule(candidate.rule_text)],
             "tests": {
                 "true_positive": {"passed": tp_ok, "total": tp_n},
                 "false_positive": {"passed": fp_ok, "total": fp_n},

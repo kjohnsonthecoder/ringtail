@@ -18,6 +18,7 @@ const el = {
   progressPanel: $("progress-panel"), log: $("log"), usage: $("usage"),
   resultPanel: $("result-panel"), summary: $("summary"),
   outRule: $("out-rule"), outCard: $("out-card"), outTp: $("out-tp"), outFp: $("out-fp"),
+  outSiem: $("out-siem"),
 };
 
 let maxAttempts = 3;
@@ -72,6 +73,14 @@ function logLine(text, kind = "step", details = []) {
 function settle(li, kind, text) {
   li.className = kind;
   if (text) li.firstChild.textContent = text;
+}
+
+// Shorten long text at a word boundary, with an ellipsis, instead of mid-word.
+function clip(text, max) {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, "") + "…";
 }
 
 function showUsage() {
@@ -204,7 +213,7 @@ async function runLoop(text, key, model) {
   const extractPrompt = await backend("/api/prompt", { stage: "extract", input: text });
   settle(li, "busy", "Claude: extracting the behavior, log source, and candidate techniques…");
   const extraction = await claude(extractPrompt, key, model);
-  settle(li, "ok", `Behavior: ${String(extraction.behavior_summary || "").slice(0, 400)}`);
+  settle(li, "ok", `Behavior: ${clip(String(extraction.behavior_summary || ""), 600)}`);
 
   let previous = null;
   for (let n = 1; n <= maxAttempts; n++) {
@@ -254,9 +263,59 @@ function showResult(r) {
   el.outCard.textContent = r.card_markdown;
   el.outTp.textContent = pretty(r.true_positives);
   el.outFp.textContent = pretty(r.false_positives);
+  showQueries(Array.isArray(r.queries) ? r.queries : []);
   selectTab("tab-rule");
   el.resultPanel.hidden = false;
   el.resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// One block per SIEM target: a label, the schema the field names assume, the query (or
+// why it isn't available), and a copy button. All text goes in with textContent.
+function showQueries(queries) {
+  el.outSiem.replaceChildren();
+  if (!queries.length) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = "No SIEM queries were returned.";
+    el.outSiem.appendChild(p);
+    return;
+  }
+  for (const q of queries) {
+    const box = document.createElement("div");
+    box.className = "query";
+    const head = document.createElement("div");
+    head.className = "query-head";
+    const label = document.createElement("strong");
+    label.textContent = String(q.label || q.target || "Query");
+    head.appendChild(label);
+    if (q.query) {
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "secondary small";
+      copy.textContent = "Copy";
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(String(q.query));
+          copy.textContent = "Copied";
+        } catch {
+          copy.textContent = "Select and copy";
+        }
+        setTimeout(() => { copy.textContent = "Copy"; }, 1500);
+      });
+      head.appendChild(copy);
+    }
+    box.appendChild(head);
+    const meta = document.createElement("p");
+    meta.className = "note";
+    meta.textContent = q.query ? String(q.schema || "") : `Not available: ${String(q.error || "unknown reason")}`;
+    box.appendChild(meta);
+    if (q.query) {
+      const pre = document.createElement("pre");
+      pre.textContent = String(q.query);
+      box.appendChild(pre);
+    }
+    el.outSiem.appendChild(box);
+  }
 }
 
 function download(kind) {
@@ -330,6 +389,9 @@ async function start() {
   if (!text.trim()) { el.input.focus(); return; }
 
   el.log.replaceChildren();
+  // Counts are per run, not per tab.
+  usage.input = 0; usage.output = 0; usage.calls = 0;
+  showUsage();
   el.resultPanel.hidden = true;
   el.progressPanel.hidden = false;
   result = null;

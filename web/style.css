@@ -103,6 +103,19 @@ button.chip { padding: 4px 10px; border-radius: 999px; font-size: 0.9rem; }
 
 .examples { margin-top: 10px; align-items: center; }
 .access { margin-top: 12px; }
+
+.query { margin-bottom: 16px; }
+.query-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.query .note { margin: 4px 0 8px; }
+.query pre { white-space: pre-wrap; word-break: break-word; }
+button.small { padding: 4px 10px; font-size: 0.85rem; }
+
+.hint { margin-top: 10px; font-size: 0.9rem; color: var(--muted); }
+.hint summary { cursor: pointer; color: var(--accent); font-weight: 600; width: fit-content; }
+.hint ul { margin: 8px 0 0; padding-left: 20px; }
+.hint li { margin: 4px 0; }
+.hint p { margin: 8px 0 0; }
+.hint strong { color: var(--text); }
 .actions { margin-top: 14px; align-items: center; }
 .downloads { margin-top: 12px; align-items: center; }
 
