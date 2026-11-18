@@ -51,13 +51,15 @@ Errors are `{"error": "<message>"}` with 400 (bad request), 411/413 (body size),
 | `RINGTAIL_RATE_PER_MINUTE` | 30 | POSTs per client IP per minute |
 | `RINGTAIL_MAX_BODY_BYTES` | 262144 | |
 | `RINGTAIL_WEB_DIR` | `web/` | Static page served at `/` if it has an `index.html` |
-| `RINGTAIL_TRUST_PROXY` | off | `1` behind one reverse proxy (Railway): rate-limit on the rightmost `X-Forwarded-For` entry |
+| `RINGTAIL_CLIENT_IP_HEADER` | unset | Header a trusted proxy overwrites with the client IP; the rate limit keys on it. Railway: `x-real-ip`. Never `x-forwarded-for` (clients can forge it). |
 
 ## Deploy (Railway)
 
+Live at <https://web-production-34d65045.up.railway.app>.
+
 `Dockerfile` + `railway.json` at the repo root: Python 3.12 slim, non-root user, health
-check on `/api/health`, restart on failure. Set `RINGTAIL_TRUST_PROXY=1` on the service.
-No secrets or API keys are configured: the server never needs one.
+check on `/api/health`, restart on failure. Set `RINGTAIL_CLIENT_IP_HEADER=x-real-ip` on
+the service. No secrets or API keys are configured: the server never needs one.
 
 The logic lives in `core/ringtail/service.py`; this module is only the HTTP layer
 (limits, key refusal, security headers). Threats and controls: `docs/threat-model.md`, T6.

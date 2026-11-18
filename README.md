@@ -8,8 +8,11 @@ Ringtail turns a plain-English behavior description or a threat report into a
 [Sigma](https://sigmahq.io) detection rule, maps it to MITRE ATT&CK, and **proves** the rule
 works by replaying sample logs: it must fire on the attack and stay quiet on benign activity.
 
-> Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 in progress: the BYOK web page and its
-> backend run locally ([web/](web/README.md), [backend/](backend/README.md)); hosting is next.
+**Try it: <https://web-production-34d65045.up.railway.app>** (bring your own Anthropic
+API key; it stays in your browser tab and goes only to Anthropic).
+
+> Status: v0.1 done (CLI, Frontline Pack, CI). v0.2 done: the BYOK web page and its
+> stateless backend ([web/](web/README.md), [backend/](backend/README.md)), hosted on Railway.
 
 ## Pipeline
 

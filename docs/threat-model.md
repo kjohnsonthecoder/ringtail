@@ -122,11 +122,18 @@ calls Claude and never sees a key: the browser calls Claude directly with the us
 Limits of the current controls: the rate limiter is in memory, per process, and resets on
 restart. It's sized for one small instance (one Railway replica).
 
-Behind Railway's proxy, `RINGTAIL_TRUST_PROXY=1` makes the limit key on the **rightmost**
-`X-Forwarded-For` entry, the one the proxy wrote. A client can prepend forged entries
-but can't change that one. uvicorn's own `--proxy-headers` is turned off: with a `*`
-allow-list it would pick the leftmost, client-controlled entry, and anyone could dodge
-the limit by sending a fresh fake IP each time. Tested in `tests/test_backend.py`.
+**Which IP the limit counts.** Behind Railway, every request reaches the container from
+a rotating internal proxy address, so the socket IP is useless. The first deploy keyed on
+the rightmost `X-Forwarded-For` entry, on the assumption that the proxy appends the real
+client IP. Live testing proved that wrong: Railway passes client-written entries
+through, so sending a fresh fake IP per request dodged the limit entirely (31 of 31
+requests allowed).
+
+The fix: `RINGTAIL_CLIENT_IP_HEADER=x-real-ip`. Railway's edge overwrites `X-Real-IP`
+with the real client IP. Verified live: with both `X-Real-IP` and `X-Forwarded-For`
+forged to a new value on every request, the 31st request still got a 429. The setting is
+off by default, so a server that isn't behind such a proxy never trusts a client-supplied
+header. uvicorn's own `--proxy-headers` is off too. Tested in `tests/test_backend.py`.
 
 ## Out of scope for now
 
