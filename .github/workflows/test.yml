@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # No API key here on purpose: CI only validates and tests committed rules. It never calls the LLM.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Unit tests
+        run: pytest -q
+      - name: Rule tests (true positive / false positive replay)
+        run: ringtail test rules/
