@@ -11,11 +11,12 @@ works by replaying sample logs: it must fire on the attack and stay quiet on ben
 **Try it: <https://web-production-34d65045.up.railway.app>** (bring your own Anthropic
 API key; it stays in your browser tab and goes only to Anthropic).
 
-![A real run on the web page: PowerShell encoded-command rule drafted, then proven on 4/4 attack and 5/5 benign samples](docs/images/web-run-encoded-powershell.png)
+![A real run on the live site: "detect certutil downloading a file from a URL" becomes a Sigma rule that passes on the first attempt, fires on 3/3 attack samples, stays quiet on 5/5 benign ones, and comes with Splunk and KQL queries](docs/images/demo.gif)
 
-> Status: v0.3. CLI, BYOK web page, and the **Highlight to Detect** browser extension
+> Status: v0.4. CLI, BYOK web page, and the **Highlight to Detect** browser extension
 > ([web/](web/README.md), [backend/](backend/README.md), [extension/](extension/README.md)).
-> Every rule also converts to Splunk SPL and Microsoft KQL.
+> Every rule converts to Splunk SPL and Microsoft KQL, and is backtested against real
+> recorded attacks and cross-checked by a second Sigma engine.
 
 ## Pipeline
 
